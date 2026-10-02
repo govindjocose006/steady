@@ -1,5 +1,5 @@
 import type {Opportunity} from './applications';
-export type ShortlistEntry={key:string;institution:string;country:string;projectTitle:string;supervisor:string;link:string;deadline:string;nextAction:string;opportunity:Opportunity};
+export type ShortlistEntry={checklist?:string[];key:string;institution:string;country:string;projectTitle:string;supervisor:string;link:string;deadline:string;nextAction:string;opportunity:Opportunity};
 const verifiedOn='2026-10-02';
 export const shortlist:ShortlistEntry[]=[
  {key:'aalto-topic-2-2026',institution:'Aalto University',country:'Finland',projectTitle:'Hybrid Magnonics–Photonics — Topic 2: Magnetic Quantum Materials and Spin-Ion–Magnon Coupling',supervisor:'Sebastiaan van Dijken / Lukáš Flajšman',link:'https://www.aalto.fi/en/open-positions/doctoral-and-postdoctoral-positions-in-hybrid-magnonics-photonics',deadline:'2026-10-23',nextAction:'Tailor my motivation letter for Aalto Topic 2',opportunity:{fitPriority:1,fitNotes:'Strongest direct overlap through rare-earth garnets, magnetic characterization, spin-ion physics and ADR/millikelvin experience.',verifiedOn,recruitment:'Open · rolling review',rolling:true,verificationNote:'Official advert confirms 23 October 2026. Interviews may happen before the deadline. No closing time is specified.'}},

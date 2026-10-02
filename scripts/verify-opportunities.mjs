@@ -116,5 +116,37 @@ try{
  check(appUI.includes('Pending applications')&&appUI.includes('Application history')&&appUI.includes('Helmholtz-Zentrum Berlin')&&!appUI.includes('Select an application to view'),'Application page renders recovered pending records, separate history and no unused detail placeholder');
  const dashSource=readFileSync(resolve(root,'app/dashboard.tsx'),'utf8');
  check(dashSource.includes("{view==='today'&&<section className=\"goal-cards\"")&&dashSource.includes("{view==='today'&&<div className=\"sidebar-goals\""),'Three-goal progress and repeated priority labels appear only on Today');
+ // Verify the four-record batch separately from the earlier shortlist.
+ user={userId:'recovered-site-owner',email:'owner@example.invalid'};
+ const requested=await import(moduleURL('lib/requested-applications.ts'));
+ const kept=(await state()).applications.map(a=>JSON.stringify(a)),keptHistory=(await state()).applicationEvents.map(e=>e.snapshot);
+ const fourResult=await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();
+ check(fourResult.imported===4&&fourResult.updated===0&&s.applications.length===10,'Exactly four requested records added to six existing workflows');
+ check(kept.every(a=>s.applications.some(b=>JSON.stringify(b)===a))&&keptHistory.every(x=>s.applicationEvents.some(e=>e.snapshot===x)),'Existing records and history unchanged');
+ const ox=s.applications.find(a=>a.institution.includes('Oxford')),cam=s.applications.find(a=>a.institution.includes('Cambridge')),ku=s.applications.find(a=>a.institution==='KU Leuven'),tue=s.applications.find(a=>a.institution.includes('Eindhoven'));
+ check(ox.deadline==='2027-01-06'&&ox.opportunity.secondaryDeadlines[0].date==='2027-03-02'&&cam.deadline==='2026-12-08'&&cam.opportunity.secondaryDeadlines[0].date==='2027-05-13','Funding deadlines primary; secondary admissions dates retained');
+ check(!cam.opportunity.closingAt&&cam.opportunity.priorityLabel==='Very high','Cambridge date-only deadline and separate research priority');
+ check(applicationsModel.displayDeadline(ku)==='2026-10-16'&&ku.opportunity.closingTimezone.includes('CET')&&ku.opportunity.verificationNote.includes('ambiguity'),'KU Leuven portal cutoff and timezone ambiguity retained');
+ check(applicationsModel.displayDeadline(tue)==='2026-10-17'&&tue.opportunity.positionCount===2&&!tue.opportunity.preferences&&tue.checklist.length===3,'Eindhoven shared advert is one record with correct India date and checklist');
+ const fourUI=renderToStaticMarkup(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));
+ check(fourUI.includes('10 applications')&&fourUI.includes('Scholarship deadline')&&fourUI.includes('Funding deadline')&&fourUI.includes('17:30 IST')&&fourUI.includes('DPhil in Condensed Matter Physics'),'Upcoming counts and funding dates render correctly');
+ const fourSnapshot=JSON.stringify(s.applications),fourHistory=JSON.stringify(s.applicationEvents);
+ await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();check(JSON.stringify(s.applications)===fourSnapshot&&JSON.stringify(s.applicationEvents)===fourHistory,'Repeated four-record import preserves edits and does not duplicate history');
+ const fourTask=uuid();s=await ok(apps,{action:'plan',id:tue.id,version:tue.version,operationId:uuid(),taskId:fourTask,dueDate:s.today,minutes:30,kind:'application'});
+ const earnedBeforeFour=s.earnedPoints;s=await edit(tue.id,{stage:'Submitted',submissionDate:s.today,notes:'Submitted Project 1 preference'});
+ check(!applicationsModel.needsPreparation(s.applications.find(a=>a.id===tue.id))&&!applicationsModel.taskApplicationActive(s.tasks.find(t=>t.id===fourTask),s.applications),'Submission removes advert and linked task from active planning');
+ check(s.earnedPoints===earnedBeforeFour+80&&s.applicationEvents.filter(e=>e.applicationId===tue.id&&e.action==='submitted').length===1,'One submission award and one submission history entry');
+ s=await complete(fourTask,true);check(s.earnedPoints===earnedBeforeFour+80,'Linked checkbox cannot duplicate reward');
+ s=await edit(tue.id,{stage:'Interview',submissionDate:model.previousDate(s.today)});check(s.earnedPoints===earnedBeforeFour+80&&s.applications.find(a=>a.id===tue.id).opportunity.positionCount===2,'Date correction and later stage preserve award and metadata');
+ const archivedFourUI=renderToStaticMarkup(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));check(!archivedFourUI.includes(tue.projectTitle)&&archivedFourUI.includes('9 applications'),'Submission removes advert from Upcoming and updates count');
+ s=await edit(tue.id,{stage:'Preparing',submissionDate:null});check(s.earnedPoints===earnedBeforeFour&&applicationsModel.needsPreparation(s.applications.find(a=>a.id===tue.id)),'Undo restores application and corrects award');
+ const finalFour=JSON.stringify(s.applications);sqlite.close();sqlite=new DatabaseSync(file);check(JSON.stringify((await state()).applications)===finalFour,'Four records persist after durable database reopen');
+ process.env.STEADY_REQUESTED_IMPORT_OWNER=user.userId;process.env.STEADY_REQUESTED_IMPORT_KEY='test-maintenance-secret';
+ const maintenance=await import(moduleURL('app/api/requested-applications/route.ts'));
+ check((await maintenance.POST(new Request('https://steady.test/api/requested-applications',{method:'POST',headers:{'Content-Type':'application/json'}}))).status===403,'Maintenance import rejects missing additional secret');
+ const maintained=await maintenance.POST(new Request('https://steady.test/api/requested-applications',{method:'POST',headers:{'Content-Type':'application/json','x-steady-import-key':'test-maintenance-secret'},body:'{}'}));check(maintained.status===200&&(await maintained.json()).alreadyImported===4,'Authorized maintenance retry is inert');
+ user={userId:'matching-existing-owner',email:'other@example.invalid'};const existingOxford=uuid();s=await ok(apps,{action:'create',id:existingOxford,operationId:uuid(),fields:{institution:'Oxford',projectTitle:'DPhil Condensed Matter Physics',stage:'Interview',submissionDate:s.today,notes:'Keep my notes',checklist:savedChecklist,nextAction:'Keep my next action'}});
+ const updatePoints=s.earnedPoints,matched=await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();const updatedOxford=s.applications.find(a=>a.id===existingOxford);
+ check(matched.updated===1&&matched.imported===3&&s.applications.length===4&&updatedOxford.stage==='Interview'&&updatedOxford.notes==='Keep my notes'&&updatedOxford.submissionDate===s.today&&JSON.stringify(updatedOxford.checklist)===JSON.stringify(savedChecklist)&&updatedOxford.nextAction==='Keep my next action'&&s.earnedPoints===updatePoints,'Matching application keeps progress, notes, checklist, next action and reward');
  console.log(`PASS: ${checks} opportunity checks for verified imports, preservation, priority/deadline sorts, badges, exact timezone, archive/undo, one shared UFAST submission, points, reload and isolation.`);
 }finally{sqlite.close();rmSync(directory,{recursive:true,force:true});console.error=savedConsoleError;}
