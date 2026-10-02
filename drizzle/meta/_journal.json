@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790790487713,
+      "tag": "0000_jittery_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790829955442,
+      "tag": "0001_purple_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790833509831,
+      "tag": "0002_exotic_black_widow",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790837090900,
+      "tag": "0003_careful_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790937036825,
+      "tag": "0004_happy_nighthawk",
+      "breakpoints": true
+    }
+  ]
+}
