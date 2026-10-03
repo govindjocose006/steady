@@ -39,10 +39,10 @@ const compile=source=>ts.transpileModule(source,{compilerOptions:{module:ts.Modu
 const root=new URL('../',import.meta.url).pathname,cache=new Map();
 const mock=encode('export const getDb=()=>globalThis.__steadyTest.getDb();export const getChatGPTUser=()=>globalThis.__steadyTest.getChatGPTUser();');
 function moduleURL(path){const absolute=resolve(root,path);if(cache.has(absolute))return cache.get(absolute);const compiled=compile(readFileSync(absolute,'utf8'));const replaced=compiled.replace(/from (["'])([^"']+)\1/g,(full,quote,spec)=>{let url;if(spec==='@/db'||spec==='@/app/chatgpt-auth')url=mock;else if(spec.startsWith('@/')||spec.startsWith('.')){const base=spec.startsWith('@/')?resolve(root,spec.slice(2)):resolve(dirname(absolute),spec);const target=[base,base+'.ts',base+'.tsx',base+'/index.ts'].find(x=>existsSync(x)&&!x.endsWith('/db'));url=moduleURL(target);}else if(spec==='radix-ui'){globalThis.__steadyRadix=createRequire(import.meta.url)(spec);url=encode('export const Dialog=globalThis.__steadyRadix.Dialog;');}else url=import.meta.resolve(spec);return 'from '+JSON.stringify(url);});const url=encode(replaced);cache.set(absolute,url);return url;}
-const api=await import(moduleURL('app/api/tasks/route.ts')),history=await import(moduleURL('app/api/history/route.ts')),model=await import(moduleURL('lib/tasks.ts'));
+const api=await import(moduleURL('app/api/tasks/route.ts'));await import(moduleURL('app/api/history/route.ts'));const model=await import(moduleURL('lib/tasks.ts'));
 const work=await import(moduleURL('app/api/workspace/route.ts'));
-const workModel=await import(moduleURL('lib/workspace.ts'));
-const apps=await import(moduleURL('app/api/applications/route.ts')),applicationsModel=await import(moduleURL('lib/applications.ts'));
+await import(moduleURL('lib/workspace.ts'));
+const apps=await import(moduleURL('app/api/applications/route.ts'));await import(moduleURL('lib/applications.ts'));
 const savedConsoleError=console.error;console.error=(message,error)=>savedConsoleError(message,error?.message||'');
 const uuid=()=>crypto.randomUUID();let checks=0;
 function check(value,message){assert.ok(value,message);checks++;}
@@ -51,26 +51,12 @@ async function state(){return (await api.GET()).json();}
 async function ok(route,op){const r=await post(route,op);assert.equal(r.status,200,JSON.stringify(r.body));return r.body;}
 async function edit(id,changes={}){const a=(await state()).applications.find(a=>a.id===id);return ok(apps,{action:'edit',id,version:a.version,operationId:uuid(),fields:{...a,...changes}});}
 async function complete(id,completed){const t=(await state()).tasks.find(t=>t.id===id);return ok(api,{action:'complete',id,version:t.version,operationId:uuid(),completed});}
-const phd=(s)=>model.progress(s.tasks,s.today,s.applications).phd;
+
 async function workEdit(id,changes={}){const r=(await state()).workspaceRecords.find(x=>x.id===id);return ok(work,{action:'edit',id,version:r.version,operationId:uuid(),fields:{...r,...changes}});}
 async function createWork(kind,fields,extra={}){return ok(work,{action:'create',kind,id:uuid(),taskId:uuid(),operationId:uuid(),fields:{title:'Test '+kind,plannedDate:model.indiaDate(),...fields},...extra});}
-async function catalog(kind,name,parentId=null){const id=uuid();await ok(work,{action:'catalog',id,operationId:uuid(),kind,name,parentId});return id;}
-const stats=s=>model.progress(s.tasks,s.today,s.applications,s.workspaceRecords);
-const findTask=(s,id)=>s.tasks.find(t=>t.workspaceRecordId===id);
-const habits=await import(moduleURL('app/api/motivation/route.ts')),motivationModel=await import(moduleURL('lib/motivation.ts'));
-const current=async()=>await state(),activeAward=(s,key)=>s.awards.find(a=>a.activityKey===key&&a.active),award=(s,key)=>s.awards.find(a=>a.activityKey===key);
-async function newWork(kind,fields={}){const id=uuid();await ok(work,{action:'create',id,taskId:uuid(),kind,operationId:uuid(),fields:{title:'New '+kind,plannedDate:model.indiaDate(),...fields}});return id;}
-async function newTask(kind,goal,customPoints=0){const id=uuid();await ok(api,{action:'create',id,operationId:uuid(),fields:{title:'Standalone '+kind,kind,goal,dueDate:model.indiaDate(),minutes:30,customPoints}});return id;}
-async function settings(changes={}){const s=await state();return ok(habits,{action:'settings',id:uuid(),operationId:uuid(),version:s.motivation.version,fields:{...s.motivation,...changes}});}
-async function newHabit(kind,fields={}){const id=uuid();await ok(habits,{action:'habit',id,operationId:uuid(),taskId:uuid(),kind,fields:{activityName:kind==='workout'?'Walk':'Distracting phone use',date:model.indiaDate(),minutes:kind==='workout'?15:12,status:kind==='workout'?'Planned':'Logged',...fields}});return id;}
-async function habitEdit(id,changes={}){const r=(await state()).habits.find(r=>r.id===id);return ok(habits,{action:'habit',id,kind:r.kind,version:r.version,operationId:uuid(),fields:{...r,...changes}});}
-async function newReward(cost=100){const id=uuid();await ok(habits,{action:'reward',id,operationId:uuid(),fields:{name:'Small personal treat',description:'Test optional description',cost}});return id;}
-async function redeem(rewardId,id=uuid(),operationId=uuid()){const r=(await state()).rewards.find(r=>r.id===rewardId);return ok(habits,{action:'redeem',rewardId,rewardVersion:r.version,id,operationId});}
-async function refund(id){const r=(await state()).redemptions.find(r=>r.id===id);return ok(habits,{action:'refund',id,version:r.version,operationId:uuid()});}
-async function focusStart(minutes=1){const id=uuid();await ok(habits,{action:'focus-start',id,operationId:uuid(),minutes});return id;}
-async function focusEdit(id,command,fields={}){const r=(await state()).focusSessions.find(r=>r.id===id);return ok(habits,{action:'focus',id,version:r.version,operationId:uuid(),command,...fields});}
-async function finishedFocus(phoneFree=true){const id=await focusStart();clock+=60000;return {id,state:await focusEdit(id,'confirm',{phoneFree})};}
-const habitTask=s=>id=>s.tasks.find(t=>t.habitRecordId===id);
+
+const habits=await import(moduleURL('app/api/motivation/route.ts'));await import(moduleURL('lib/motivation.ts'));
+
 const planning=await import(moduleURL('app/api/planning/route.ts')),plans=await import(moduleURL('lib/planning.ts')),reviews=await import(moduleURL('lib/weekly-review.ts'));
 const fingerprint=()=>JSON.stringify(['tasks','events','applications','application_events','workspace_records','workspace_catalog','workspace_events','workspace_settings','habit_records','habit_events','focus_sessions','points_awards','points_ledger','rewards','redemptions','motivation_settings'].map(table=>sqlite.prepare('SELECT * FROM '+table+' ORDER BY rowid').all()));
 const dayFields=(taskIds=[],extra={})=>({availableMinutes:180,taskIds,priorityIds:taskIds.slice(0,3),decisions:{},...extra});

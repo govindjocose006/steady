@@ -16,12 +16,12 @@ export function weeklySummary(s:State,selectedDate:string){
  const loggedDays=new Set(phone.map(h=>h.date)),phoneMinutes=phone.reduce((n,h)=>n+h.minutes,0);
  const ledger=s.pointsHistory.filter(e=>inWeek(e.localDate)),redemptions=s.redemptions.filter(r=>inWeek(r.localDate));
  const earned=s.awards.filter(a=>a.active&&inWeek(a.activityDate)).reduce((n,a)=>n+a.amount,0);
- const spent=-ledger.filter(e=>e.action==='redemption').reduce((n,e)=>n+e.delta,0),refunds=ledger.filter(e=>e.action==='refund').reduce((n,e)=>n+e.delta,0);
- const settingEvents=s.workspaceEvents.filter(e=>e.entityType==='settings').sort((a,b)=>b.happenedAt.localeCompare(a.happenedAt)||b.sequence-a.sequence);
+ const spent=s.pointsDaily?s.pointsDaily.filter(d=>inWeek(d.date)).reduce((n,d)=>n+d.spent,0):-ledger.filter(e=>e.action==='redemption').reduce((n,e)=>n+e.delta,0),refunds=s.pointsDaily?s.pointsDaily.filter(d=>inWeek(d.date)).reduce((n,d)=>n+d.refunds,0):ledger.filter(e=>e.action==='refund').reduce((n,e)=>n+e.delta,0);
+ const settingEvents=(s.reviewEvidence?.settingsEvents||s.workspaceEvents).filter(e=>e.entityType==='settings').sort((a,b)=>b.happenedAt.localeCompare(a.happenedAt)||b.sequence-a.sequence);
  const daily=dates.map(date=>{const event=settingEvents.find(e=>e.localDate<=date);let settings:WorkspaceSettings=s.settings;try{if(event)settings=JSON.parse(event.snapshot) as WorkspaceSettings;}catch{}
  const historicalKnown=!!event||date===s.today;
  const recorded=lectures.filter(r=>r.completionDate===date).length+legacyLectures.filter(t=>t.completedDate===date).length;
- const lectureEntries=s.workspaceEvents.some(e=>e.entityType==='record'&&e.localDate===date&&JSON.parse(e.snapshot).kind==='lecture')||s.workspaceRecords.some(r=>r.kind==='lecture'&&(r.completionDate===date||r.plannedDate===date))||s.tasks.some(t=>t.kind==='lecture'&&(t.dueDate===date||t.completedDate===date));
+ const lectureEntries=!!s.reviewEvidence?.lectureDates.includes(date)||s.workspaceEvents.some(e=>e.entityType==='record'&&e.localDate===date&&JSON.parse(e.snapshot).kind==='lecture')||s.workspaceRecords.some(r=>r.kind==='lecture'&&(r.completionDate===date||r.plannedDate===date))||s.tasks.some(t=>t.kind==='lecture'&&(t.dueDate===date||t.completedDate===date));
  return {date,count:recorded,target:settings.lectureTarget,stretch:settings.lectureStretch,historicalKnown,hasEntries:lectureEntries,future:date>s.today,met:recorded>=settings.lectureTarget};});
  const actual=(values:(number|null)[])=>({minutes:values.reduce<number>((n,v)=>n+(v??0),0),recorded:values.filter(v=>v!==null).length,missing:values.filter(v=>v===null).length});
  const sessionActual=(kind:'practice'|'revision')=>actual([...sessions.filter(r=>r.sessionType===kind).map(r=>r.actualMinutes),...legacySessions.filter(t=>t.kind===kind).map(()=>null)]);
@@ -34,7 +34,7 @@ export function weeklySummary(s:State,selectedDate:string){
  workouts:{count:workouts.length+legacyWorkouts.length,days:new Set([...workouts.map(r=>r.completionDate),...legacyWorkouts.map(t=>t.completedDate)]).size,minutes:workouts.reduce((n,h)=>n+h.minutes,0),restDays:new Set(rest.map(r=>r.date)).size,missingDuration:legacyWorkouts.length,hasEntries:workouts.length>0||legacyWorkouts.length>0||rest.length>0||s.habits.some(h=>h.kind==='workout'&&inWeek(h.date))},
  focus:{count:focus.length,minutes:focus.reduce((n,f)=>n+f.durationMs/60000,0)},
  phone:{minutes:phoneMinutes,days:loggedDays.size,missingDays:elapsed.length-loggedDays.size,average:loggedDays.size?phoneMinutes/loggedDays.size:null},
- points:{earned,spent,refunds,netSpent:spent-refunds,ledgerEntries:ledger.length},rewards:{count:redemptions.filter(r=>!r.refunded).length,records:redemptions},
+ points:{earned,spent,refunds,netSpent:spent-refunds,ledgerEntries:s.pointsDaily?s.pointsDaily.filter(d=>inWeek(d.date)).reduce((n,d)=>n+d.entries,0):ledger.length},rewards:{count:redemptions.filter(r=>!r.refunded).length,records:redemptions},
  records:sessions,legacySessions
  };
 }

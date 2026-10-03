@@ -1,3 +1,5 @@
+import {historyStatement} from './history-storage';
+import {historyPage} from './history';
 import {planningReadStatements,decodePlanning} from './planning-storage';
 import {motivationReadStatements,decodeMotivation} from './motivation-storage';
 import {getDb} from '@/db';
@@ -13,12 +15,27 @@ export async function readTask(owner:string,id:string) {return getDb().prepare(`
 export async function readState(owner:string):Promise<State>{
   const db=getDb(),r=await db.batch([
     db.prepare(`SELECT ${taskColumns} FROM tasks WHERE owner_id=? ORDER BY due_date,created_at`).bind(owner),
-    db.prepare('SELECT sequence,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM events WHERE owner_id=? ORDER BY sequence DESC LIMIT 51').bind(owner),
+    historyStatement(db,owner,'tasks'),
     db.prepare(`SELECT ${applicationColumns} FROM applications WHERE owner_id=? ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END,deadline,institution`).bind(owner),
-    db.prepare('SELECT sequence,application_id AS applicationId,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM application_events WHERE owner_id=? ORDER BY sequence DESC').bind(owner),
-    ...workspaceReadStatements(db,owner),...motivationReadStatements(db,owner),...planningReadStatements(db,owner)
+    historyStatement(db,owner,'applications'),
+    ...workspaceReadStatements(db,owner),...motivationReadStatements(db,owner),...planningReadStatements(db,owner),
+    db.prepare("SELECT COALESCE(SUM(delta),0) AS available,COALESCE(SUM(CASE WHEN action IN ('award','correction') THEN delta ELSE 0 END),0) AS earned FROM points_ledger WHERE owner_id=?").bind(owner),
+    db.prepare("SELECT local_date AS date, SUM(CASE WHEN action='redemption' THEN -delta ELSE 0 END) AS spent,SUM(CASE WHEN action='refund' THEN delta ELSE 0 END) AS refunds,COUNT(*) AS entries FROM points_ledger WHERE owner_id=? GROUP BY local_date ORDER BY local_date").bind(owner),
+    db.prepare("SELECT sequence,entity_id AS entityId,entity_type AS entityType,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM workspace_events WHERE owner_id=? AND entity_type='settings' ORDER BY sequence DESC").bind(owner),
+    db.prepare("SELECT DISTINCT local_date AS date FROM workspace_events WHERE owner_id=? AND entity_type='record' AND json_extract(snapshot,'$.kind')='lecture'").bind(owner)
   ]);
-  return {tasks:r[0].results as Task[],events:r[1].results.slice(0,50) as State['events'],hasMore:r[1].results.length>50,today:indiaDate(),applications:(r[2].results as ApplicationRow[]).map(decodeApplication),applicationEvents:r[3].results as State['applicationEvents'],...decodeWorkspace(r.slice(4,8)),...decodeMotivation(r.slice(8,16)),...decodePlanning(r.slice(16))};
+  const tasks=historyPage(r[1].results as State['events']), applications=historyPage(r[3].results as State['applicationEvents']);
+  const workspace=historyPage(r[7].results as State['workspaceEvents']), points=historyPage(r[14].results as State['pointsHistory']), habits=historyPage(r[15].results as State['habitEvents']);
+  const totals=r[19].results[0] as {available:number;earned:number};
+  return {
+    tasks:r[0].results as Task[],events:tasks.events,hasMore:tasks.hasMore,today:indiaDate(),
+    applications:(r[2].results as ApplicationRow[]).map(decodeApplication),applicationEvents:applications.events,
+    ...decodeWorkspace(r.slice(4,8)),...decodeMotivation(r.slice(8,16),totals),...decodePlanning(r.slice(16,19)),
+    workspaceEvents:workspace.events,pointsHistory:points.events,habitEvents:habits.events,
+    historyHasMore:{tasks:tasks.hasMore,applications:applications.hasMore,workspace:workspace.hasMore,points:points.hasMore,habits:habits.hasMore},
+    pointsDaily:r[20].results as State['pointsDaily'],
+    reviewEvidence:{settingsEvents:r[21].results as State['workspaceEvents'],lectureDates:(r[22].results as {date:string}[]).map(row=>row.date)}
+  };
 }
 export function json(value:unknown,status=200){return Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}});}
 export function isWriteRequest(request:Request){return request.headers.get('sec-fetch-site')!=='cross-site'&&!!request.headers.get('content-type')?.includes('application/json');}

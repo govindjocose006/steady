@@ -9,7 +9,9 @@ const checks=[
  ['scripts/verify-trustworthy.mjs'],
  ['scripts/verify-daily-surface.mjs'],
  ['scripts/verify-workspace-clarity.mjs'],
- ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false']
+ ['scripts/verify-history.mjs'],
+ ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false'],
+ ['node_modules/eslint/bin/eslint.js','.','--ignore-pattern','dist','--ignore-pattern','.next','--max-warnings','0']
 ];
 for(const args of checks){
  const result=spawnSync(process.execPath,args,{stdio:'inherit',env:process.env});

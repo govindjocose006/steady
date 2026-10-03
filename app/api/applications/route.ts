@@ -1,3 +1,4 @@
+import {logFailure} from '@/lib/safe-log';
 import {repairOpportunityOwnership} from '@/lib/opportunity-ownership';
 import {awardStatements,transferAward} from '@/lib/points';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
@@ -13,7 +14,7 @@ const operation=z.discriminatedUnion('action',[
   z.object({action:z.literal('edit'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),fields:applicationFields}),
   z.object({action:z.literal('plan'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),taskId:z.string().uuid(),dueDate:dateSchema,minutes:z.number().int().min(1).max(1440),kind:z.enum(['preparation','application']).default('preparation')})
 ]);
-export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your applications.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch(e){console.error('Read applications failed',e);return json({error:'Could not load applications. Please retry.'},503);}}
+export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your applications.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch{logFailure('applications.read');return json({error:'Could not load applications. Please retry.'},503);}}
 export async function POST(request:Request){
   const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
   let result;try{const text=await request.text();if(text.length>40000)return json({error:'Application details are too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid application data.'},400);}
@@ -73,5 +74,5 @@ export async function POST(request:Request){
       if(!done[0].meta.changes)return json({error:'This application changed. Reopen the planner.'},409);linkedTaskId=task.id;
     }
     return json({...await readState(owner),...(linkedTaskId?{linkedTaskId}: {})});
-  }catch(e){console.error('Save application failed',e);try{const duplicate=await getDb().prepare('SELECT request FROM application_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json({...await readState(owner),...(op.action==='plan'?{linkedTaskId:op.taskId}: {})});if(op.action==='plan'){const app=await readApplication(owner,op.id);if(app){const existing=await getDb().prepare('SELECT id FROM tasks WHERE owner_id=? AND application_id=? AND application_action_key=?').bind(owner,op.id,actionKey(app.nextAction)).first<{id:string}>();if(existing)return json({...await readState(owner),linkedTaskId:existing.id,reused:true});}}}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
+  }catch{logFailure('applications.save');try{const duplicate=await getDb().prepare('SELECT request FROM application_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json({...await readState(owner),...(op.action==='plan'?{linkedTaskId:op.taskId}: {})});if(op.action==='plan'){const app=await readApplication(owner,op.id);if(app){const existing=await getDb().prepare('SELECT id FROM tasks WHERE owner_id=? AND application_id=? AND application_action_key=?').bind(owner,op.id,actionKey(app.nextAction)).first<{id:string}>();if(existing)return json({...await readState(owner),linkedTaskId:existing.id,reused:true});}}}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
 }

@@ -30,19 +30,19 @@ const compile=source=>ts.transpileModule(source,{compilerOptions:{module:ts.Modu
 const root=new URL('../',import.meta.url).pathname,cache=new Map();
 const mock=encode('export const getDb=()=>globalThis.__steadyTest.getDb();export const getChatGPTUser=()=>globalThis.__steadyTest.getChatGPTUser();');
 function moduleURL(path){const absolute=resolve(root,path);if(cache.has(absolute))return cache.get(absolute);const compiled=compile(readFileSync(absolute,'utf8'));const replaced=compiled.replace(/from (["'])([^"']+)\1/g,(full,quote,spec)=>{let url;if(spec==='@/db'||spec==='@/app/chatgpt-auth')url=mock;else if(spec.startsWith('@/')||spec.startsWith('.')){const base=spec.startsWith('@/')?resolve(root,spec.slice(2)):resolve(dirname(absolute),spec);const target=[base,base+'.ts',base+'.tsx',base+'/index.ts'].find(x=>existsSync(x)&&!x.endsWith('/db'));url=moduleURL(target);}else url=import.meta.resolve(spec);return 'from '+JSON.stringify(url);});const url=encode(replaced);cache.set(absolute,url);return url;}
-const api=await import(moduleURL('app/api/tasks/route.ts')),history=await import(moduleURL('app/api/history/route.ts')),model=await import(moduleURL('lib/tasks.ts'));
+const api=await import(moduleURL('app/api/tasks/route.ts'));await import(moduleURL('app/api/history/route.ts'));const model=await import(moduleURL('lib/tasks.ts'));
 const work=await import(moduleURL('app/api/workspace/route.ts'));
 const workModel=await import(moduleURL('lib/workspace.ts'));
-const apps=await import(moduleURL('app/api/applications/route.ts')),applicationsModel=await import(moduleURL('lib/applications.ts'));
+const apps=await import(moduleURL('app/api/applications/route.ts'));await import(moduleURL('lib/applications.ts'));
 const savedConsoleError=console.error;console.error=(message,error)=>savedConsoleError(message,error?.message||'');
 const uuid=()=>crypto.randomUUID();let checks=0;
 function check(value,message){assert.ok(value,message);checks++;}
 async function post(route,op){const r=await route.POST(new Request('https://steady.test/api/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(op)}));return{status:r.status,body:await r.json()};}
 async function state(){return (await api.GET()).json();}
 async function ok(route,op){const r=await post(route,op);assert.equal(r.status,200,JSON.stringify(r.body));return r.body;}
-async function edit(id,changes={}){const a=(await state()).applications.find(a=>a.id===id);return ok(apps,{action:'edit',id,version:a.version,operationId:uuid(),fields:{...a,...changes}});}
+
 async function complete(id,completed){const t=(await state()).tasks.find(t=>t.id===id);return ok(api,{action:'complete',id,version:t.version,operationId:uuid(),completed});}
-const phd=(s)=>model.progress(s.tasks,s.today,s.applications).phd;
+
 async function workEdit(id,changes={}){const r=(await state()).workspaceRecords.find(x=>x.id===id);return ok(work,{action:'edit',id,version:r.version,operationId:uuid(),fields:{...r,...changes}});}
 async function createWork(kind,fields,extra={}){return ok(work,{action:'create',kind,id:uuid(),taskId:uuid(),operationId:uuid(),fields:{title:'Test '+kind,plannedDate:model.indiaDate(),...fields},...extra});}
 async function catalog(kind,name,parentId=null){const id=uuid();await ok(work,{action:'catalog',id,operationId:uuid(),kind,name,parentId});return id;}

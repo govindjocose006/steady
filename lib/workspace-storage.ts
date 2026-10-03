@@ -1,3 +1,4 @@
+import {historyStatement} from './history-storage';
 import {getDb} from '@/db';
 import {indiaDate,type Task} from './tasks';
 import {defaultSettings,recordTaskKind,type WorkspaceRecord,type WorkspaceEvent,type CatalogItem,type WorkFields} from './workspace';
@@ -11,7 +12,7 @@ export function workspaceReadStatements(db:D1Database,owner:string){return [
  db.prepare(`SELECT ${workspaceColumns} FROM workspace_records WHERE owner_id=? ORDER BY created_at,id`).bind(owner),
  db.prepare(`SELECT ${catalogColumns} FROM workspace_catalog WHERE owner_id=? ORDER BY kind,name,id`).bind(owner),
  db.prepare('SELECT data,version FROM workspace_settings WHERE owner_id=?').bind(owner),
- db.prepare('SELECT sequence,entity_id AS entityId,entity_type AS entityType,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM workspace_events WHERE owner_id=? ORDER BY sequence DESC').bind(owner)
+ historyStatement(db,owner,'workspace')
 ];}
 export function decodeWorkspace(r:D1Result[]){const settings=r[2].results[0] as {data:string;version:number}|undefined;return {workspaceRecords:(r[0].results as StoredRecord[]).map(decodeRecord),catalog:r[1].results as CatalogItem[],settings:settings?{...defaultSettings,...JSON.parse(settings.data),version:settings.version}:defaultSettings,workspaceEvents:r[3].results as WorkspaceEvent[]};}
 export function workspaceEvent(db:D1Database,owner:string,id:string,type:WorkspaceEvent['entityType'],next:unknown,previous:unknown,action:string,operationId:string,request:string,now:string,guard='1',args:(string|number|null)[]=[]){return db.prepare(`INSERT INTO workspace_events(operation_id,owner_id,entity_id,entity_type,action,snapshot,previous,happened_at,local_date,request) SELECT ?,?,?,?,?,?,?,?,?,? WHERE ${guard}`).bind(operationId,owner,id,type,action,JSON.stringify(next),previous?JSON.stringify(previous):null,now,indiaDate(),request,...args);}

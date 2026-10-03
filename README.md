@@ -1,35 +1,10 @@
 # Steady
 
-## Repository development
+This repository contains the React/TypeScript application behind the private Steady site. GitHub `app-source` and Sites share application source; publishing still uses the existing private Sites workflow. This is not a standalone Vercel deployment: its authentication and D1 database remain managed by Sites.
 
-This branch contains the full React/TypeScript app, synchronized from the private live Steady site on 2 October 2026. Use this source for incremental application development. The previous standalone export is preserved at `legacy/index.html`; it is a separate offline snapshot, not the live app or its saved database.
+Use Node.js 24 and the pinned pnpm version. Run `npm run install:ci`, `npm run check`, and `npm run build`. Checks run isolated fixtures, TypeScript, and strict lint; they never write to the live database. See [VERIFICATION.md](VERIFICATION.md) for CI, history paging, browser checks and verification limits.
 
-### Install and check
-
-Use Node.js 24 or newer. From the repository folder:
-
-```bash
-npm run install:ci
-npm run check
-npm run build
-```
-
-`check` runs all five API/data verification suites (317 checks) and TypeScript. Tests use an isolated temporary SQLite database and fake identities; they never modify live records.
-
-### Current hosting
-
-The live site remains at https://steady-govind.govind-jocose.chatgpt.site/ with its existing private ChatGPT sign-in and Sites-managed D1 storage. Copying source to GitHub does not migrate saved data or connect GitHub deployments to Sites. Publishing changes to the current site still uses the authorized Sites publishing workflow.
-
-This source is not yet a standalone Vercel deployment: the Cloudflare Worker/database adapter and platform-provided authentication need a deliberate migration first. Before that migration, keep the live site and its current data as the production app. Do not replace sign-in with a fake identity or deploy an unprotected data API.
-
-### Keep personal records private
-
-Only source code and public opportunity metadata belong in Git. Database exports, local runtime databases, account IDs, credentials and environment files are excluded. The optional one-time shortlist ownership repair uses `STEADY_LEGACY_IMPORT_OWNER_ID` and `STEADY_LEGACY_IMPORT_OWNER_EMAIL` from server configuration and is disabled when these values are absent. The already repaired live database does not need it again.
-
-### Continue step by step
-
-For each requested feature, inspect the existing implementation, preserve its data/history, implement a focused change, run `npm run check`, and verify the build. Commit the change to this repository. Keep hosting/data migration separate from feature work until private authentication, storage import, completion accounting and refresh persistence have been verified on the new host.
-
+Personal records, credentials, browser sessions and local database files must never be committed. GitHub retains the earlier standalone export under `legacy/`; it is a separate snapshot, not the live database.
 
 A private personal workspace built with React, TypeScript, Vinext, and a Sites-managed D1 database.
 
@@ -105,10 +80,10 @@ Weekly reviews remain for a later phase.
 
 ## Verified opportunity shortlist
 
-The 2 October 2026 shortlist stores seven ranked positions in six application workflows. UFAST PM4 and PM5 are preferences within one record with separate project adverts, ranks and fit notes. Upcoming lists active opportunities independently of daily tasks, defaults to deadline order and also supports fit-priority order. Applications has separate Pending and Application history sections, stage filters, search (including IMPRS Quantum Materials) and editable priority/fit notes. Rank means research fit and interest, never admission probability.
+The 2 October 2026 shortlist stores seven ranked positions in six application workflows. UFAST PM4 and PM5 are preferences within one record with separate project adverts, ranks and fit notes. Upcoming lists active opportunities independently of daily tasks, defaults to deadline order and also supports fit-priority order. Applications defaults to active records, with archived/all views, stage filters, search (including IMPRS Quantum Materials) and editable priority/fit notes. Rank means research fit and interest, never admission probability.
 
 Deadline badges use India display dates. Exact official closing instants are stored only when stated: Halle closes 15 November at 23:59 CET, displayed as 16 November 04:29 IST. Other adverts retain date-only deadlines. Basel’s advert says before 31 December and may fill early; MPGC-QM has conflicting older recruitment text alongside its current OPEN notice. The saved verification notes flag these qualifications.
 
 Submission hides the application and its linked tasks from active lists without deleting records. History keeps archived details and one application submission event per workflow; linked submission-task audit rows remain saved but are not repeated as separate submission entries in the main History view. Manual completion/date correction/undo synchronizes linked submission checkboxes, while the canonical application award is maintained once. Later stages preserve submission dates and awards.
 
-`node scripts/verify-opportunities.mjs` adds 52 checks of import deduplication, preservation, editing, sorts/badge boundaries, exact closing times, rendering, shared UFAST awards/history, archive/undo, persistence and isolation. Opportunity imports use the signed-in per-Site user identity. Ownership recovery is narrowly scoped, idempotent, and preserves the imported audit snapshots. No seed data is placed in schema migrations.
+`node scripts/verify-opportunities.mjs` adds 38 checks of import deduplication, preservation, editing, sorts/badge boundaries, exact closing times, rendering, shared UFAST awards/history, archive/undo, persistence and isolation. The completed one-time maintenance import endpoint is retired and returns 410; normal signed-in application editing remains available. No seed data is placed in schema migrations.

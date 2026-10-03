@@ -1,3 +1,4 @@
+import {logFailure} from '@/lib/safe-log';
 import {z} from 'zod';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {getDb} from '@/db';
@@ -71,5 +72,5 @@ export async function POST(request:Request){
  if(target){statements.push(db.prepare('INSERT INTO planning_events(operation_id,owner_id,entity_id,entity_type,snapshot,previous,happened_at,request) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM planning_events WHERE owner_id=? AND operation_id=?)').bind('destination:'+op.operationId,owner,target.next.date,'plan',JSON.stringify(target.next),target.before.version?JSON.stringify(target.before):null,now,fingerprint,owner,op.operationId),write('day_plans','date',target.next.date,target.next,target.next.version));}
  const results=await db.batch(statements);if(!results[0].meta.changes)return json({error:'Another save changed this plan. Reload and try again.'},409);
  return json(await readState(owner));
- }catch(e){console.error('Save planning failed',e);try{const proof=await getDb().prepare('SELECT request FROM planning_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(proof?.request===fingerprint)return json(await readState(owner));}catch{}return json({error:'Could not confirm the save. Your input is still here; retry safely.'},503);}
+ }catch{logFailure('planning.save');try{const proof=await getDb().prepare('SELECT request FROM planning_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(proof?.request===fingerprint)return json(await readState(owner));}catch{}return json({error:'Could not confirm the save. Your input is still here; retry safely.'},503);}
 }

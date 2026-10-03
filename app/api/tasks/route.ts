@@ -1,3 +1,4 @@
+import {logFailure} from '@/lib/safe-log';
 import {repairOpportunityOwnership} from '@/lib/opportunity-ownership';
 import {awardStatements,transferAward,workoutStatements} from '@/lib/points';
 import {pointKindForTask,type HabitRecord} from '@/lib/motivation';
@@ -18,7 +19,7 @@ const operation=z.discriminatedUnion('action',[
   z.object({action:z.literal('edit'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),fields}),
   z.object({action:z.literal('complete'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),completed:z.boolean()})
 ]);
-export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to see your private tasks.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch(e){console.error('Read tasks failed',e);return json({error:'Your tasks could not be loaded. Please retry.'},503);}}
+export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to see your private tasks.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch{logFailure('tasks.read');return json({error:'Your tasks could not be loaded. Please retry.'},503);}}
 export async function POST(request:Request){
   const user=await getChatGPTUser();if(!user)return json({error:'Your session has ended. Reload to sign in again.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
   let result;try{const text=await request.text();if(text.length>8000)return json({error:'Task is too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid task data.'},400);}
@@ -85,5 +86,5 @@ export async function POST(request:Request){
     }
     const done=await db.batch(statements);if(!done[0].meta.changes)return json({error:'A linked record changed. Reopen the task to use the latest version.'},409);
     return json(await readState(owner));
-  }catch(e){console.error('Save task failed',e);try{const d=await getDb().prepare('SELECT request FROM events WHERE operation_id=? AND owner_id=?').bind(op.operationId,owner).first<{request:string}>();if(d?.request===fingerprint)return json(await readState(owner));}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
+  }catch{logFailure('tasks.save');try{const d=await getDb().prepare('SELECT request FROM events WHERE operation_id=? AND owner_id=?').bind(op.operationId,owner).first<{request:string}>();if(d?.request===fingerprint)return json(await readState(owner));}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
 }

@@ -1,3 +1,4 @@
+import {logFailure} from '@/lib/safe-log';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {getDb} from '@/db';
 import {z} from 'zod';
@@ -19,7 +20,7 @@ const operation=z.discriminatedUnion('action',[
  z.object({...common,action:z.literal('focus-start'),minutes:z.number().int().min(1).max(240)}),
  z.object({...common,action:z.literal('focus'),version,command:z.enum(['pause','resume','cancel','confirm']),phoneFree:z.boolean().optional(),completionDate:dateSchema.optional()})
 ]);
-export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your private records.'},401);try{return json(await readState(user.userId));}catch(e){console.error('Read habits failed',e);return json({error:'Could not load your records. Please retry.'},503);}}
+export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your private records.'},401);try{return json(await readState(user.userId));}catch{logFailure('motivation.read');return json({error:'Could not load your records. Please retry.'},503);}}
 export async function POST(request:Request){
  const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
  let parsed;try{const text=await request.text();if(text.length>30000)return json({error:'This record is too long.'},400);parsed=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid record data.'},400);}if(!parsed.success)return json({error:parsed.error.issues[0]?.message||'Check these details.'},400);
@@ -87,5 +88,5 @@ export async function POST(request:Request){
  }
  const done=await db.batch(statements);if(!done[0].meta.changes)return json({error:op.action==='redeem'?'You need more available points for this reward. Your balance may have changed in another tab.':'This record changed. Reload and reopen it before saving.'},409);
  return json(await readState(owner));
- }catch(e){console.error('Save habits or rewards failed',e);try{const duplicate=await db?.prepare('SELECT request FROM habit_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json(await readState(owner));if(op.action==='focus-start'&&await db?.prepare("SELECT id FROM focus_sessions WHERE owner_id=? AND active_key='active'").bind(owner).first())return json({...await readState(owner),reused:true});}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
+ }catch{logFailure('motivation.save');try{const duplicate=await db?.prepare('SELECT request FROM habit_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json(await readState(owner));if(op.action==='focus-start'&&await db?.prepare("SELECT id FROM focus_sessions WHERE owner_id=? AND active_key='active'").bind(owner).first())return json({...await readState(owner),reused:true});}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
 }

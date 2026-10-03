@@ -1,3 +1,4 @@
+import {logFailure} from '@/lib/safe-log';
 import {awardStatements,transferAward} from '@/lib/points';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {getDb} from '@/db';
@@ -22,7 +23,7 @@ async function references(owner:string,kind:WorkspaceRecord['kind'],fields:WorkF
  if(fields.sourceRecordId){const source=await readWorkspaceRecord(owner,fields.sourceRecordId);if(!source||source.kind==='research'||kind!=='session')return 'Choose a study record for this follow-up.';}
  return null;
 }
-export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your private workspace.'},401);try{return json(await readState(user.userId));}catch(e){console.error('Read workspace failed',e);return json({error:'Could not load your workspace. Please retry.'},503);}}
+export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your private workspace.'},401);try{return json(await readState(user.userId));}catch{logFailure('workspace.read');return json({error:'Could not load your workspace. Please retry.'},503);}}
 export async function POST(request:Request){
  const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
  let result;try{const text=await request.text();if(text.length>50000)return json({error:'This record is too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid record data.'},400);}if(!result.success)return json({error:result.error.issues[0]?.message||'Check the record details.'},400);
@@ -72,5 +73,5 @@ export async function POST(request:Request){
  const done=await db.batch(statements);if(!done[0].meta.changes)return json({error:'A linked record changed. Reopen the editor before saving.'},409);
  }
  return json(await readState(owner));
- }catch(e){console.error('Save workspace failed',e);try{if(!db)throw new Error('Storage unavailable');const duplicate=await db.prepare('SELECT request FROM workspace_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json(await readState(owner));if(op.action==='create'&&op.fields.sourceRecordId){const existing=await db.prepare('SELECT id FROM workspace_records WHERE owner_id=? AND source_record_id=? AND followup_key=?').bind(owner,op.fields.sourceRecordId,followupKey(op.fields)).first<{id:string}>();if(existing)return json({...await readState(owner),reused:true,workspaceRecordId:existing.id});}}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
+ }catch{logFailure('workspace.save');try{if(!db)throw new Error('Storage unavailable');const duplicate=await db.prepare('SELECT request FROM workspace_events WHERE owner_id=? AND operation_id=?').bind(owner,op.operationId).first<{request:string}>();if(duplicate?.request===fingerprint)return json(await readState(owner));if(op.action==='create'&&op.fields.sourceRecordId){const existing=await db.prepare('SELECT id FROM workspace_records WHERE owner_id=? AND source_record_id=? AND followup_key=?').bind(owner,op.fields.sourceRecordId,followupKey(op.fields)).first<{id:string}>();if(existing)return json({...await readState(owner),reused:true,workspaceRecordId:existing.id});}}catch{}return json({error:'We could not confirm this save. Your input is still here; please retry.'},503);}
 }
