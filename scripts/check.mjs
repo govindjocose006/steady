@@ -5,6 +5,7 @@ const checks=[
  ['scripts/verify-workspace.mjs'],
  ['scripts/verify-motivation.mjs'],
  ['scripts/verify-opportunities.mjs'],
+ ['scripts/verify-planning.mjs'],
  ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false']
 ];
 for(const args of checks){

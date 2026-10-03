@@ -1,3 +1,4 @@
+import type {PlanningState} from './planning';
 import type {MotivationState} from './motivation';
 import type {Application,ApplicationEvent} from './applications';
 import type {WorkspaceRecord,WorkspaceEvent,CatalogItem,WorkspaceSettings} from './workspace';
@@ -7,7 +8,7 @@ export type Goal = MainGoal | 'habits';
 export type Kind = 'application' | 'preparation' | 'lecture' | 'revision' | 'practice' | 'research' | 'other' | 'workout';
 export type Task = { id: string; title: string; goal: Goal; kind: Kind; dueDate: string; minutes: number; completedAt: string | null; completedDate: string | null; createdAt: string; updatedAt: string; version: number; applicationId?:string|null; applicationActionKey?:string|null; workspaceRecordId?:string|null; habitRecordId?:string|null; customPoints?:number };
 export type TaskEvent = { sequence: number; action: 'created' | 'edited' | 'completed' | 'reopened'; snapshot: string; previous: string | null; happenedAt: string; localDate: string };
-export type State = MotivationState & { tasks: Task[]; events: TaskEvent[]; today: string; hasMore: boolean; applications:Application[]; applicationEvents:ApplicationEvent[]; workspaceRecords:WorkspaceRecord[]; workspaceEvents:WorkspaceEvent[]; catalog:CatalogItem[]; settings:WorkspaceSettings };
+export type State = MotivationState & PlanningState & { tasks: Task[]; events: TaskEvent[]; today: string; hasMore: boolean; applications:Application[]; applicationEvents:ApplicationEvent[]; workspaceRecords:WorkspaceRecord[]; workspaceEvents:WorkspaceEvent[]; catalog:CatalogItem[]; settings:WorkspaceSettings };
 export const goalNames: Record<Goal,string> = { phd: 'PhD applications', net: 'CSIR NET', research: 'Research', habits: 'Habits' };
 export const kindNames: Record<Kind,string> = { application: 'Application submission', preparation: 'Application preparation', lecture: 'Lecture', revision: 'Revision', practice: 'Practice', research: 'Research task', other:'Other task', workout:'Workout' };
 export const goalKinds: Record<Goal,Kind[]> = { phd: ['application','preparation','other'], net: ['lecture','revision','practice','other'], research: ['research','other'], habits:['workout'] };

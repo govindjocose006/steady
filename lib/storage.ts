@@ -1,3 +1,4 @@
+import {planningReadStatements,decodePlanning} from './planning-storage';
 import {motivationReadStatements,decodeMotivation} from './motivation-storage';
 import {getDb} from '@/db';
 import {indiaDate,type Task,type State} from './tasks';
@@ -15,9 +16,9 @@ export async function readState(owner:string):Promise<State>{
     db.prepare('SELECT sequence,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM events WHERE owner_id=? ORDER BY sequence DESC LIMIT 51').bind(owner),
     db.prepare(`SELECT ${applicationColumns} FROM applications WHERE owner_id=? ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END,deadline,institution`).bind(owner),
     db.prepare('SELECT sequence,application_id AS applicationId,action,snapshot,previous,happened_at AS happenedAt,local_date AS localDate FROM application_events WHERE owner_id=? ORDER BY sequence DESC').bind(owner),
-    ...workspaceReadStatements(db,owner),...motivationReadStatements(db,owner)
+    ...workspaceReadStatements(db,owner),...motivationReadStatements(db,owner),...planningReadStatements(db,owner)
   ]);
-  return {tasks:r[0].results as Task[],events:r[1].results.slice(0,50) as State['events'],hasMore:r[1].results.length>50,today:indiaDate(),applications:(r[2].results as ApplicationRow[]).map(decodeApplication),applicationEvents:r[3].results as State['applicationEvents'],...decodeWorkspace(r.slice(4,8)),...decodeMotivation(r.slice(8))};
+  return {tasks:r[0].results as Task[],events:r[1].results.slice(0,50) as State['events'],hasMore:r[1].results.length>50,today:indiaDate(),applications:(r[2].results as ApplicationRow[]).map(decodeApplication),applicationEvents:r[3].results as State['applicationEvents'],...decodeWorkspace(r.slice(4,8)),...decodeMotivation(r.slice(8,16)),...decodePlanning(r.slice(16))};
 }
 export function json(value:unknown,status=200){return Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}});}
 export function isWriteRequest(request:Request){return request.headers.get('sec-fetch-site')!=='cross-site'&&!!request.headers.get('content-type')?.includes('application/json');}
