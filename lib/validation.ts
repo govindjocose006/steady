@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {stages} from './applications';
 export const dateSchema=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s=>s>='2000-01-01'&&s<='2100-12-31'&&!isNaN(Date.parse(s))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s,'Choose a valid date between 2000 and 2100.');
 const link=z.string().trim().max(2000).refine(s=>{if(!s)return true;try{return ['https:','http:'].includes(new URL(s).protocol);}catch{return false;}},'Use a complete http or https link.');
-const opportunity=z.object({
+const opportunity=z.object({closingVerification:z.enum(['verified','unverified','ambiguous']).optional(),deadlineEdited:z.boolean().optional(),
  primaryDeadlineLabel:z.string().max(100).optional(),secondaryDeadlines:z.array(z.object({label:z.string().max(180),date:dateSchema,closingAt:z.string().datetime().optional(),closingLabel:z.string().max(100).optional(),closingTimezone:z.string().max(100).optional()})).max(5).optional(),priorityLabel:z.string().max(40).optional(),reference:z.string().max(100).optional(),entry:z.string().max(100).optional(),funding:z.string().max(1000).optional(),applicationType:z.string().max(100).optional(),positionCount:z.number().int().min(1).max(20).optional(),preferredProject:z.string().max(1000).optional(),
  fitPriority:z.number().int().min(1).max(999).nullable().optional(),fitNotes:z.string().max(3000).optional(),aliases:z.array(z.string().max(100)).max(10).optional(),
  preferences:z.array(z.object({code:z.string().max(30),title:z.string().max(250),fitPriority:z.number().int().min(1).max(999),fitNotes:z.string().max(3000),link})).max(10).optional(),

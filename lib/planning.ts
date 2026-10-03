@@ -16,3 +16,14 @@ export function planTotals(plan:DayPlan,s:Pick<State,'tasks'|'applications'|'hab
 export function addDays(date:string,n:number){return new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);}
 export function weekStart(date:string){const d=new Date(date+'T12:00:00Z');return addDays(date,-((d.getUTCDay()+6)%7));}
 export function weekDates(date:string){const start=weekStart(date);return Array.from({length:7},(_,i)=>addDays(start,i));}
+
+export type UpcomingWork={task:Task;plannedDates:string[];sortDate:string};
+// Presentation selector only: completed allocations remain in their saved plans.
+export function upcomingWork(s:Pick<State,'today'|'tasks'|'applications'|'habits'|'workspaceRecords'|'dayPlans'>):UpcomingWork[]{
+ const candidates=new Map<string,UpcomingWork>();
+ const pending=(task:Task)=>!task.completedAt&&activeTask(task,s)&&(!task.workspaceRecordId||s.workspaceRecords.find(r=>r.id===task.workspaceRecordId)?.status!=='Completed')&&(!task.habitRecordId||s.habits.find(r=>r.id===task.habitRecordId)?.status!=='Completed');
+ const add=(task:Task,date?:string)=>{if(!pending(task))return;const key=activityKey(task),entry=candidates.get(key)||{task,plannedDates:[],sortDate:task.dueDate};if(date&&!entry.plannedDates.includes(date))entry.plannedDates.push(date);candidates.set(key,entry);};
+ for(const plan of s.dayPlans.filter(p=>p.date>s.today).sort((a,b)=>a.date.localeCompare(b.date)))for(const task of planTasks(plan,s))add(task,plan.date);
+ for(const task of s.tasks.filter(t=>t.dueDate>s.today))add(task);
+ return [...candidates.values()].map(entry=>({...entry,plannedDates:entry.plannedDates.sort(),sortDate:[...entry.plannedDates,...(entry.task.dueDate>s.today?[entry.task.dueDate]:[])].sort()[0]})).sort((a,b)=>a.sortDate.localeCompare(b.sortDate)||a.task.title.localeCompare(b.task.title));
+}

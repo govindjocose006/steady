@@ -1,13 +1,14 @@
+import {validStudyTab,validHabitTab,type StudyTab,type HabitTab} from './workspace-actions';
 export const views=['today','upcoming','applications','study','research','habits','rewards','review','history'] as const;
 export type View=typeof views[number];
-export type Route={view:View;applicationId:string|null;workspaceRecordId:string|null;habitId:string|null};
+export type Route={view:View;applicationId:string|null;workspaceRecordId:string|null;habitId:string|null;studyTab?:StudyTab|null;habitTab?:HabitTab|null};
 export function readRoute(address:string):Route{
  const url=new URL(address,'https://steady.invalid'),path=url.pathname.replace(/\/$/,'')||'/';
  const view:View=path==='/'?(url.searchParams.get('view')==='upcoming'?'upcoming':url.searchParams.get('view')==='history'?'history':'today'):views.includes(path.slice(1) as View)?path.slice(1) as View:'today';
  const id=(key:string)=>{const value=url.searchParams.get(key);return value&&/^[a-f0-9-]{36}$/i.test(value)?value:null;};
- return {view,applicationId:view==='applications'?id('application'):null,workspaceRecordId:view==='study'||view==='research'?id('record'):null,habitId:view==='habits'?id('record'):null};
+ return {view,applicationId:view==='applications'?id('application'):null,workspaceRecordId:view==='study'||view==='research'?id('record'):null,habitId:view==='habits'?id('record'):null,studyTab:view==='study'?validStudyTab(url.searchParams.get('tab')):null,habitTab:view==='habits'?validHabitTab(url.searchParams.get('tab')):null};
 }
-export function routeURL(route:Route){const {view}=route;const id=view==='applications'?route.applicationId:view==='study'||view==='research'?route.workspaceRecordId:view==='habits'?route.habitId:null;return view==='today'?'/':view==='upcoming'||view==='history'?'/?view='+view:'/'+view+(id?'?'+(view==='applications'?'application':'record')+'='+encodeURIComponent(id):'');}
+export function routeURL(route:Route){const {view}=route;const id=view==='applications'?route.applicationId:view==='study'||view==='research'?route.workspaceRecordId:view==='habits'?route.habitId:null;const params=new URLSearchParams();if(id)params.set(view==='applications'?'application':'record',id);const tab=view==='study'?route.studyTab:view==='habits'?route.habitTab:null;if(tab)params.set('tab',tab);return view==='today'?'/':view==='upcoming'||view==='history'?'/?view='+view:'/'+view+(params.size?'?'+params:'');}
 export const pageRoute=(view:View):Route=>({view,applicationId:null,workspaceRecordId:null,habitId:null});
 export type LocationEntry={url:string;state:Record<string,unknown>|null};
 export type HistoryPort={current:()=>LocationEntry;replace:(url:string,state:Record<string,unknown>)=>void;push:(url:string,state:Record<string,unknown>)=>void;go:(delta:number)=>void;listen:(listener:()=>void)=>()=>void};

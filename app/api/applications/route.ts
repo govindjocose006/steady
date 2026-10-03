@@ -48,7 +48,8 @@ export async function POST(request:Request){
       const done=await db.batch(statements);if(!done[0].meta.changes)return json({error:'The linked task changed. Reopen the application form.'},409);
     }else if(op.action==='edit'){
       const next:Application={...before!,...op.fields,opportunity:op.fields.opportunity??before!.opportunity,submissionTaskId:op.fields.submissionDate===before!.submissionDate?before!.submissionTaskId:null,updatedAt:now,version:before!.version+1};
-      if(next.deadline!==before!.deadline&&next.opportunity?.closingAt&&next.opportunity.closingAt===before!.opportunity?.closingAt)next.opportunity={...next.opportunity,closingAt:null,closingLabel:'',closingTimezone:''};
+      if(next.deadline!==before!.deadline)next.opportunity={...next.opportunity,deadlineEdited:true};
+      if(next.deadline!==before!.deadline&&next.opportunity?.closingAt&&next.opportunity.closingAt===before!.opportunity?.closingAt)next.opportunity={...next.opportunity,closingAt:null,closingLabel:'',closingTimezone:'',closingVerification:'unverified',deadlineEdited:true};
       const action=next.submissionDate!==before!.submissionDate?(next.submissionDate?(before!.submissionDate?'submission_corrected':'submitted'):'submission_undone'):next.stage!==before!.stage?'stage_changed':JSON.stringify(next.checklist)!==JSON.stringify(before!.checklist)?'checklist_updated':'edited';
       const linked=next.submissionDate!==before!.submissionDate?(await db.prepare(`SELECT ${taskColumns} FROM tasks WHERE owner_id=? AND application_id=? AND kind='application'`).bind(owner,next.id).all<Task>()).results:[];
       const taskGuards=linked.map(()=> ' AND EXISTS(SELECT 1 FROM tasks WHERE id=? AND owner_id=? AND version=?)').join('');

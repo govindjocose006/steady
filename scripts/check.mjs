@@ -8,6 +8,7 @@ const checks=[
  ['scripts/verify-planning.mjs'],
  ['scripts/verify-trustworthy.mjs'],
  ['scripts/verify-daily-surface.mjs'],
+ ['scripts/verify-workspace-clarity.mjs'],
  ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false']
 ];
 for(const args of checks){

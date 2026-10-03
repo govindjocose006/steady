@@ -154,5 +154,22 @@ try{
  user={userId:'matching-existing-owner',email:'other@example.invalid'};const existingOxford=uuid();s=await ok(apps,{action:'create',id:existingOxford,operationId:uuid(),fields:{institution:'Oxford',projectTitle:'DPhil Condensed Matter Physics',stage:'Interview',submissionDate:s.today,notes:'Keep my notes',checklist:savedChecklist,nextAction:'Keep my next action'}});
  const updatePoints=s.earnedPoints,matched=await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();const updatedOxford=s.applications.find(a=>a.id===existingOxford);
  check(matched.updated===1&&matched.imported===3&&s.applications.length===4&&updatedOxford.stage==='Interview'&&updatedOxford.notes==='Keep my notes'&&updatedOxford.submissionDate===s.today&&JSON.stringify(updatedOxford.checklist)===JSON.stringify(savedChecklist)&&updatedOxford.nextAction==='Keep my next action'&&s.earnedPoints===updatePoints,'Matching application keeps progress, notes, checklist, next action and reward');
+ // Deadline edits use the existing private API and immutable audit snapshots.
+ user={userId:'deadline-edit-owner',email:'deadline-edit@example.invalid'};const timedId=uuid();
+ s=await ok(apps,{action:'create',id:timedId,operationId:uuid(),fields:{institution:'Deadline test',deadline:'2027-01-06',stage:'Preparing',opportunity:{fitPriority:1,fitNotes:'Keep fit',closingAt:'2027-01-06T12:00:00.000Z',closingLabel:'6 Jan 2027 noon UK',closingTimezone:'Europe/London',closingVerification:'verified',verifiedOn:'2026-10-02'}}});
+ s=await edit(timedId,{deadline:'2027-01-07'});let timed=s.applications.find(a=>a.id===timedId);
+ check(timed.opportunity.closingAt===null&&timed.opportunity.deadlineEdited&&timed.opportunity.closingVerification==='unverified','Changing a date clears a stale timed cutoff and explicitly flags the edited date');
+ check(s.applicationEvents.some(e=>e.previous&&JSON.parse(e.previous).opportunity.closingAt==='2027-01-06T12:00:00.000Z'),'Old source time remains in immutable application history');
+ const deadlineHelpers=await import(moduleURL('lib/deadlines.ts'));
+ const newOpportunity=deadlineHelpers.applyClosingInput(timed.deadline,timed.opportunity,{time:'12:00',zone:'Europe/London',verified:false,touched:true});
+ s=await edit(timedId,{opportunity:newOpportunity});timed=s.applications.find(a=>a.id===timedId);
+ check(timed.opportunity.closingAt==='2027-01-07T12:00:00.000Z'&&timed.opportunity.closingVerification==='unverified'&&timed.opportunity.fitPriority===1&&timed.opportunity.fitNotes==='Keep fit','Edited source time, certainty and timezone persist without changing fit');
+ const historyBeforeSubmission=s.applicationEvents.map(e=>e.snapshot);s=await edit(timedId,{stage:'Submitted',submissionDate:s.today});const accounting=JSON.stringify({earned:s.earnedPoints,available:s.availablePoints,awards:s.awards,ledger:s.pointsHistory});
+ s=await edit(timedId,{stage:'Interview',notes:'Keep submitted notes',deadline:'2027-01-08'});
+ check(!applicationsModel.needsPreparation(s.applications.find(a=>a.id===timedId))&&JSON.stringify({earned:s.earnedPoints,available:s.availablePoints,awards:s.awards,ledger:s.pointsHistory})===accounting,'Deadline correction after submission leaves archive and one frozen award intact');
+ check(historyBeforeSubmission.every(snapshot=>s.applicationEvents.some(e=>e.snapshot===snapshot)),'All earlier deadline and application snapshots remain available');
+ const beforeBad=JSON.stringify(s.applications);const bad=await post(apps,{action:'edit',id:timedId,version:s.applications[0].version,operationId:uuid(),fields:{...s.applications[0],opportunity:{closingVerification:'invented'}}});
+ check(bad.status===400&&JSON.stringify((await state()).applications)===beforeBad,'Invalid cutoff certainty is rejected without editing saved records');
+ sqlite.close();sqlite=new DatabaseSync(file);check(JSON.stringify((await state()).applications)===beforeBad,'Deadline corrections and certainty survive durable database reopen');
  console.log(`PASS: ${checks} opportunity checks for verified imports, preservation, priority/deadline sorts, badges, exact timezone, archive/undo, one shared UFAST submission, points, reload and isolation.`);
 }finally{sqlite.close();rmSync(directory,{recursive:true,force:true});console.error=savedConsoleError;}
