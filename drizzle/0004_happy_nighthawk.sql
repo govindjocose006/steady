@@ -1,0 +1,1 @@
+ALTER TABLE `applications` ADD `opportunity` text DEFAULT '{}' NOT NULL;
