@@ -121,7 +121,7 @@ try{
  const appUI=guardedRender(React.createElement(applicationsView.default,{data:recovered,busy:false,requestedId:null,onSelect:()=>{},onTaskEdit:()=>{},mutate:async()=>true,formError:'',clearFormError:()=>{},createRequested:0}));
  check(appUI.includes('Pending applications')&&appUI.includes('Application history')&&appUI.includes('Helmholtz-Zentrum Berlin')&&!appUI.includes('Select an application to view'),'Application page renders recovered pending records, separate history and no unused detail placeholder');
  const dashSource=readFileSync(resolve(root,'app/dashboard.tsx'),'utf8');
- check(dashSource.includes("{view==='today'&&<section className=\"goal-cards\"")&&dashSource.includes("{view==='today'&&<div className=\"sidebar-goals\""),'Three-goal progress and repeated priority labels appear only on Today');
+ check(dashSource.includes("{data&&view==='today'&&<TodayWorkSurface")&&!dashSource.includes('className="sidebar-goals"'),'Plan and separate goal progress are scoped to Today, without repeated sidebar priorities');
  // Verify the four-record batch separately from the earlier shortlist.
  user={userId:'recovered-site-owner',email:repairEmail};
  const requested=await import(moduleURL('lib/requested-applications.ts'));

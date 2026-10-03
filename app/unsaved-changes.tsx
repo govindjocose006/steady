@@ -3,7 +3,7 @@ import {createContext,useContext,useEffect,useId,useLayoutEffect,useRef,useState
 import {Dialog as RadixDialog} from 'radix-ui';
 import {DraftRegistry,installUnloadGuard,formFingerprint,type DraftEntry,type LeaveRequest} from '@/lib/unsaved';
 
-type Guard = {registry:DraftRegistry; dirty:boolean; failed:boolean; request:(action:()=>void,ids?:string[])=>void;
+type Guard = {registry:DraftRegistry; dirty:boolean; failed:boolean; request:(action:()=>void,ids?:string[],cancel?:()=>void)=>void;
   submitted:(id:string)=>void; closed:(id:string)=>void; result:(ok:boolean)=>void; edited:()=>void; waitForSubmit:(id:string,form:HTMLFormElement)=>Promise<boolean>};
 const Context=createContext<Guard|null>(null);
 export function useUnsavedChanges(){const context=useContext(Context);if(!context)throw new Error('Draft protection is unavailable.');return context;}
@@ -13,14 +13,14 @@ export function UnsavedChangesProvider({children}:{children:ReactNode}){
   useEffect(()=>registry.subscribe(()=>setDirty(registry.dirty)),[registry]);
   useEffect(()=>installUnloadGuard(window,registry),[registry]);
   const guard:Guard={registry,dirty,failed,
-    request:(action,ids)=>{const request=registry.request(action,ids);if(request){prompt.current=request;setPending(request);}},
+    request:(action,ids,cancel)=>{const request=registry.request(action,ids);if(request){prompt.current?.cancel?.();request.cancel=cancel;prompt.current=request;setPending(request);}},
     submitted:id=>{submitting.current=id;},
     closed:id=>{if(submitting.current===id){submitting.current=null;waiters.current.get(id)?.(true);waiters.current.delete(id);}},
     edited:()=>setFailed(false),
     result:ok=>{setFailed(!ok);const id=submitting.current;submitting.current=null;if(id){if(ok)registry.set(id,null);waiters.current.get(id)?.(ok);waiters.current.delete(id);}},
     waitForSubmit:(id,form)=>new Promise(resolve=>{if(!form.reportValidity()){resolve(false);return;}waiters.current.set(id,resolve);form.requestSubmit();})};
-  async function saveAndContinue(){const request=prompt.current;if(!request)return;setSaving(true);const ok=await registry.save(request);setSaving(false);if(ok){prompt.current=null;setPending(null);}else{setFailed(true);setPending(null);prompt.current=null;}}
-  return <Context.Provider value={guard}>{children}<RadixDialog.Root open={!!pending} onOpenChange={open=>{if(!open&&!saving){setPending(null);prompt.current=null;}}}><RadixDialog.Portal><RadixDialog.Overlay className="dialog-overlay"/><RadixDialog.Content className="task-dialog unsaved-dialog" onInteractOutside={e=>{if(saving)e.preventDefault();}} onEscapeKeyDown={e=>{if(saving)e.preventDefault();}}><RadixDialog.Title>Keep your unsaved changes?</RadixDialog.Title><RadixDialog.Description>{pending?.entries.map(e=>e.label).join(', ')} has edits that have not been saved.</RadixDialog.Description><p className="field-help">Save before continuing, discard these edits, or stay here to keep editing.</p><div className="dialog-actions"><button className="secondary-button" disabled={saving} onClick={()=>{setPending(null);prompt.current=null;}}>Keep editing</button><button className="text-button" disabled={saving} onClick={()=>{const request=prompt.current;prompt.current=null;setPending(null);if(request)registry.discard(request);}}>Discard edits</button><button className="primary-button" disabled={saving} onClick={()=>void saveAndContinue()}>{saving?'Saving…':'Save and continue'}</button></div></RadixDialog.Content></RadixDialog.Portal></RadixDialog.Root></Context.Provider>;
+  async function saveAndContinue(){const request=prompt.current;if(!request)return;setSaving(true);const ok=await registry.save(request);setSaving(false);if(ok){prompt.current=null;setPending(null);}else{request.cancel?.();setFailed(true);setPending(null);prompt.current=null;}}
+  return <Context.Provider value={guard}>{children}<RadixDialog.Root open={!!pending} onOpenChange={open=>{if(!open&&!saving){prompt.current?.cancel?.();setPending(null);prompt.current=null;}}}><RadixDialog.Portal><RadixDialog.Overlay className="dialog-overlay"/><RadixDialog.Content className="task-dialog unsaved-dialog" onInteractOutside={e=>{if(saving)e.preventDefault();}} onEscapeKeyDown={e=>{if(saving)e.preventDefault();}}><RadixDialog.Title>Keep your unsaved changes?</RadixDialog.Title><RadixDialog.Description>{pending?.entries.map(e=>e.label).join(', ')} has edits that have not been saved.</RadixDialog.Description><p className="field-help">Save before continuing, discard these edits, or stay here to keep editing.</p><div className="dialog-actions"><button className="secondary-button" disabled={saving} onClick={()=>{prompt.current?.cancel?.();setPending(null);prompt.current=null;}}>Keep editing</button><button className="text-button" disabled={saving} onClick={()=>{const request=prompt.current;prompt.current=null;setPending(null);if(request)registry.discard(request);}}>Discard edits</button><button className="primary-button" disabled={saving} onClick={()=>void saveAndContinue()}>{saving?'Saving…':'Save and continue'}</button></div></RadixDialog.Content></RadixDialog.Portal></RadixDialog.Root></Context.Provider>;
 }
 
 export function useDraftProtection(dirty:boolean,label:string,save:()=>Promise<boolean>,discard:()=>void){

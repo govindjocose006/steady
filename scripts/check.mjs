@@ -7,6 +7,7 @@ const checks=[
  ['scripts/verify-opportunities.mjs'],
  ['scripts/verify-planning.mjs'],
  ['scripts/verify-trustworthy.mjs'],
+ ['scripts/verify-daily-surface.mjs'],
  ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false']
 ];
 for(const args of checks){

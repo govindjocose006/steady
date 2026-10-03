@@ -1,5 +1,5 @@
 export type DraftEntry = {label:string; save:()=>Promise<boolean>; discard:()=>void};
-export type LeaveRequest = {entries:DraftEntry[]; proceed:()=>void};
+export type LeaveRequest = {entries:DraftEntry[]; proceed:()=>void;cancel?:()=>void};
 
 // Drafts are registered only in memory. No records, points or browser storage are touched.
 export class DraftRegistry {
