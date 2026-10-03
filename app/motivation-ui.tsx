@@ -1,13 +1,13 @@
 'use client';
 import {useState,type FormEvent,type ReactNode} from 'react';
-import {Dialog} from 'radix-ui';
+import {Dialog} from './unsaved-changes';
 import {X} from 'lucide-react';
 import {pointKinds,pointLabels,type MotivationSettings} from '@/lib/motivation';
 import type {State} from '@/lib/tasks';
 export type Mutate=(payload:unknown,message:string,insideForm?:boolean,endpoint?:string)=>Promise<boolean>;
 export type MotivationProps={data:State;busy:boolean;mutate:Mutate;formError:string;clearFormError:()=>void;createRequested:number};
 export function Modal({open,onClose,busy,title,description,children}:{open:boolean;onClose:()=>void;busy:boolean;title:string;description:string;children:ReactNode}){return <Dialog.Root open={open} onOpenChange={v=>{if(!v&&!busy)onClose();}}><Dialog.Portal><Dialog.Overlay className="dialog-overlay"/><Dialog.Content className="task-dialog work-dialog" onInteractOutside={e=>{if(busy)e.preventDefault();}} onEscapeKeyDown={e=>{if(busy)e.preventDefault();}}><div className="dialog-heading"><div><Dialog.Title>{title}</Dialog.Title><Dialog.Description>{description}</Dialog.Description></div><Dialog.Close className="icon-button" disabled={busy} aria-label="Close form"><X size={20}/></Dialog.Close></div>{children}</Dialog.Content></Dialog.Portal></Dialog.Root>;}
-export function FormActions({busy,onClose,label='Save',disabledSubmit=false}:{busy:boolean;onClose:()=>void;label?:string;disabledSubmit?:boolean}){return <div className="dialog-actions"><button type="button" className="secondary-button" disabled={busy} onClick={onClose}>Cancel</button><button className="primary-button" disabled={busy||disabledSubmit}>{busy?'Saving…':label}</button></div>;}
+export function FormActions({busy,onClose,label='Save',disabledSubmit=false}:{busy:boolean;onClose:()=>void;label?:string;disabledSubmit?:boolean}){return <div className="dialog-actions"><button type="button" className="secondary-button" disabled={busy} onClick={onClose} data-draft-dismiss>Cancel</button><button className="primary-button" disabled={busy||disabledSubmit}>{busy?'Saving…':label}</button></div>;}
 export function MotivationSettingsForm({data,busy,mutate,formError,onClose,section}:{data:State;busy:boolean;mutate:Mutate;formError:string;onClose:()=>void;section:'points'|'habits'}){
  const [settings,setSettings]=useState<MotivationSettings>(()=>({...data.motivation,points:{...data.motivation.points}})),[operationId]=useState(()=>crypto.randomUUID()),[id]=useState(()=>crypto.randomUUID());
  async function save(e:FormEvent){e.preventDefault();if(await mutate({action:'settings',id,operationId,version:settings.version,fields:settings},'Your settings are saved.',true,'/api/motivation'))onClose();}

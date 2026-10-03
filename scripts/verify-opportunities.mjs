@@ -1,3 +1,4 @@
+import {createRequire} from 'node:module';
 process.env.STEADY_LEGACY_IMPORT_OWNER_ID='legacy-account-owner';
 process.env.STEADY_LEGACY_IMPORT_OWNER_EMAIL='owner@example.invalid';
 // Exercise the real API handlers against an isolated, durable SQLite database.
@@ -24,7 +25,7 @@ const encode=source=>'data:text/javascript;base64,'+Buffer.from(source).toString
 const compile=source=>ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const root=new URL('../',import.meta.url).pathname,cache=new Map();
 const mock=encode('export const getDb=()=>globalThis.__steadyTest.getDb();export const getChatGPTUser=()=>globalThis.__steadyTest.getChatGPTUser();');
-function moduleURL(path){const absolute=resolve(root,path);if(cache.has(absolute))return cache.get(absolute);const compiled=compile(readFileSync(absolute,'utf8'));const replaced=compiled.replace(/from (["'])([^"']+)\1/g,(full,quote,spec)=>{let url;if(spec==='@/db'||spec==='@/app/chatgpt-auth')url=mock;else if(spec.startsWith('@/')||spec.startsWith('.')){const base=spec.startsWith('@/')?resolve(root,spec.slice(2)):resolve(dirname(absolute),spec);const target=[base,base+'.ts',base+'.tsx',base+'/index.ts'].find(x=>existsSync(x)&&!x.endsWith('/db'));url=moduleURL(target);}else url=import.meta.resolve(spec);return 'from '+JSON.stringify(url);});const url=encode(replaced);cache.set(absolute,url);return url;}
+function moduleURL(path){const absolute=resolve(root,path);if(cache.has(absolute))return cache.get(absolute);const compiled=compile(readFileSync(absolute,'utf8'));const replaced=compiled.replace(/from (["'])([^"']+)\1/g,(full,quote,spec)=>{let url;if(spec==='@/db'||spec==='@/app/chatgpt-auth')url=mock;else if(spec.startsWith('@/')||spec.startsWith('.')){const base=spec.startsWith('@/')?resolve(root,spec.slice(2)):resolve(dirname(absolute),spec);const target=[base,base+'.ts',base+'.tsx',base+'/index.ts'].find(x=>existsSync(x)&&!x.endsWith('/db'));url=moduleURL(target);}else if(spec==='radix-ui'){globalThis.__steadyRadix=createRequire(import.meta.url)(spec);url=encode('export const Dialog=globalThis.__steadyRadix.Dialog;');}else url=import.meta.resolve(spec);return 'from '+JSON.stringify(url);});const url=encode(replaced);cache.set(absolute,url);return url;}
 const api=await import(moduleURL('app/api/tasks/route.ts')),history=await import(moduleURL('app/api/history/route.ts')),model=await import(moduleURL('lib/tasks.ts'));
 const apps=await import(moduleURL('app/api/applications/route.ts')),applicationsModel=await import(moduleURL('lib/applications.ts'));
 const savedConsoleError=console.error;console.error=(message,error)=>savedConsoleError(message,error?.message||'');
@@ -38,6 +39,8 @@ async function complete(id,completed){const t=(await state()).tasks.find(t=>t.id
 const phd=(s)=>model.progress(s.tasks,s.today,s.applications).phd;
 const imports=await import(moduleURL('lib/opportunity-import.ts')),shortlistModel=await import(moduleURL('lib/opportunity-shortlist.ts'));
 const summary=await import(moduleURL('app/application-summary.tsx')),React=await import('react'),{renderToStaticMarkup}=await import('react-dom/server');
+const {UnsavedChangesProvider}=await import(moduleURL('app/unsaved-changes.tsx'));
+const guardedRender=element=>renderToStaticMarkup(React.createElement(UnsavedChangesProvider,null,element));
 try{
  let s=await state();const originalEvents=s.events.map(e=>e.snapshot),originalTasks=JSON.stringify(s.tasks);
  const aalto=uuid(),savedChecklist=[{id:uuid(),label:'My own CV requirement',done:true}];
@@ -82,21 +85,24 @@ try{
  s=await edit(halle.id,{deadline:'2026-11-18'});check(!s.applications.find(x=>x.id===halle.id).opportunity.closingAt,'Changing an official date clears stale time metadata instead of inventing a closing time');
  await imports.importOpportunities('test-owner');check((await state()).applications.find(x=>x.id===aalto).opportunity.fitPriority===9,'Reload/reimport preserves user edits after the initial import');
  const saved=JSON.stringify((await state()).applications);sqlite.close();sqlite=new DatabaseSync(file);s=await state();check(JSON.stringify(s.applications)===saved&&s.earnedPoints===beforeEarned+80,'All opportunity edits, preferences, archive status and points persist after database reopen');
- const ui=renderToStaticMarkup(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));
+ const ui=guardedRender(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));
  check(ui.includes('Deadline first')&&ui.includes('Fit priority')&&!ui.includes('PM4 —')&&!ui.includes('PM5 —'),'Upcoming render contains both sorts and hides submitted UFAST preferences');
  check(ui.includes('Official advert')&&ui.includes('days remaining'),'Upcoming render exposes links, dates and remaining days');
  user={userId:'other-owner',email:'other@example.invalid'};check((await state()).applications.length===0,'Imported private records are isolated from other accounts');user={userId:'test-owner',email:'test@example.invalid'};
  failAt=1;await assert.rejects(imports.importOpportunities('import-failure-owner'));check(sqlite.prepare('SELECT count(*) AS n FROM applications WHERE owner_id=?').get('import-failure-owner').n===0,'Interrupted import rolls back all new records');
  const recovery=await imports.importOpportunities('import-failure-owner');check(recovery.imported===6,'Failed import can retry safely');
  // Reproduce the production bug: account ID import, then a different per-Site ID.
- const misplacedOwner='legacy-account-owner';
+ // Support both the configured repository helper and the Site's original one-off repair.
+ const repairSource=readFileSync(resolve(root,'lib/opportunity-ownership.ts'),'utf8');
+ const misplacedOwner=repairSource.match(/const importOwner='([^']+)'/)?.[1]||process.env.STEADY_LEGACY_IMPORT_OWNER_ID;
+ const repairEmail=repairSource.match(/const ownerEmail='([^']+)'/)?.[1]||process.env.STEADY_LEGACY_IMPORT_OWNER_EMAIL;
  await imports.importOpportunities(misplacedOwner);
  sqlite.prepare("UPDATE applications SET created_at='2026-10-02T10:46:55.182Z',updated_at='2026-10-02T10:46:55.182Z' WHERE owner_id=?").run(misplacedOwner);
  const misplaced=sqlite.prepare('SELECT * FROM applications WHERE owner_id=?').all(misplacedOwner),misplacedAudit=sqlite.prepare('SELECT snapshot FROM application_events WHERE owner_id=?').all(misplacedOwner).map(e=>e.snapshot);
  const repair=await import(moduleURL('lib/opportunity-ownership.ts')),importApi=await import(moduleURL('app/api/opportunity-import/route.ts'));
  user={userId:'unrelated-site-user',email:'unrelated@example.invalid'};check((await state()).applications.length===0&&sqlite.prepare('SELECT count(*) AS n FROM applications WHERE owner_id=?').get(misplacedOwner).n===6,'Unrelated identity cannot claim the misplaced shortlist');
  user=null;check((await api.GET()).status===401&&(await apps.GET()).status===401&&(await importApi.POST(new Request('https://steady.test/api/opportunity-import',{method:'POST',headers:{'Content-Type':'application/json'}}))).status===401,'Unauthenticated requests cannot read, repair or import private records');
- user={userId:'recovered-site-owner',email:'owner@example.invalid'};
+ user={userId:'recovered-site-owner',email:repairEmail};
  const canonicalId=uuid();let recovered=await ok(apps,{action:'create',id:canonicalId,operationId:uuid(),fields:{institution:'Aalto University',projectTitle:'Hybrid Magnonics Photonics Topic 2',link:shortlistModel.shortlist[0].link,stage:'Preparing',deadline:'2026-10-19',notes:'Preserve my own existing application',nextAction:'My own next action',checklist:savedChecklist}});
  const oldSnapshots=recovered.applicationEvents.map(e=>e.snapshot),canonicalBefore=recovered.applications[0];
  failAt=1;await assert.rejects(repair.repairOpportunityOwnership(user));check(sqlite.prepare('SELECT count(*) AS n FROM applications WHERE owner_id=?').get(misplacedOwner).n===6,'Interrupted ownership repair rolls back without losing any source records');
@@ -112,12 +118,12 @@ try{
  sqlite.close();sqlite=new DatabaseSync(file);check(JSON.stringify((await state()).applications)===repairSnapshot,'Recovered ownership and records persist after database reopen');
  user={userId:'other-owner',email:'other@example.invalid'};check((await state()).applications.length===0,'Recovered shortlist stays private to its actual owner');
  const applicationsView=await import(moduleURL('app/applications-view.tsx'));
- const appUI=renderToStaticMarkup(React.createElement(applicationsView.default,{data:recovered,busy:false,requestedId:null,onSelect:()=>{},onTaskEdit:()=>{},mutate:async()=>true,formError:'',clearFormError:()=>{},createRequested:0}));
+ const appUI=guardedRender(React.createElement(applicationsView.default,{data:recovered,busy:false,requestedId:null,onSelect:()=>{},onTaskEdit:()=>{},mutate:async()=>true,formError:'',clearFormError:()=>{},createRequested:0}));
  check(appUI.includes('Pending applications')&&appUI.includes('Application history')&&appUI.includes('Helmholtz-Zentrum Berlin')&&!appUI.includes('Select an application to view'),'Application page renders recovered pending records, separate history and no unused detail placeholder');
  const dashSource=readFileSync(resolve(root,'app/dashboard.tsx'),'utf8');
  check(dashSource.includes("{view==='today'&&<section className=\"goal-cards\"")&&dashSource.includes("{view==='today'&&<div className=\"sidebar-goals\""),'Three-goal progress and repeated priority labels appear only on Today');
  // Verify the four-record batch separately from the earlier shortlist.
- user={userId:'recovered-site-owner',email:'owner@example.invalid'};
+ user={userId:'recovered-site-owner',email:repairEmail};
  const requested=await import(moduleURL('lib/requested-applications.ts'));
  const kept=(await state()).applications.map(a=>JSON.stringify(a)),keptHistory=(await state()).applicationEvents.map(e=>e.snapshot);
  const fourResult=await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();
@@ -128,7 +134,7 @@ try{
  check(!cam.opportunity.closingAt&&cam.opportunity.priorityLabel==='Very high','Cambridge date-only deadline and separate research priority');
  check(applicationsModel.displayDeadline(ku)==='2026-10-16'&&ku.opportunity.closingTimezone.includes('CET')&&ku.opportunity.verificationNote.includes('ambiguity'),'KU Leuven portal cutoff and timezone ambiguity retained');
  check(applicationsModel.displayDeadline(tue)==='2026-10-17'&&tue.opportunity.positionCount===2&&!tue.opportunity.preferences&&tue.checklist.length===3,'Eindhoven shared advert is one record with correct India date and checklist');
- const fourUI=renderToStaticMarkup(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));
+ const fourUI=guardedRender(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));
  check(fourUI.includes('10 applications')&&fourUI.includes('Scholarship deadline')&&fourUI.includes('Funding deadline')&&fourUI.includes('17:30 IST')&&fourUI.includes('DPhil in Condensed Matter Physics'),'Upcoming counts and funding dates render correctly');
  const fourSnapshot=JSON.stringify(s.applications),fourHistory=JSON.stringify(s.applicationEvents);
  await imports.importOpportunities(user.userId,requested.requestedApplications,requested.requestedBatch);s=await state();check(JSON.stringify(s.applications)===fourSnapshot&&JSON.stringify(s.applicationEvents)===fourHistory,'Repeated four-record import preserves edits and does not duplicate history');
@@ -138,7 +144,7 @@ try{
  check(s.earnedPoints===earnedBeforeFour+80&&s.applicationEvents.filter(e=>e.applicationId===tue.id&&e.action==='submitted').length===1,'One submission award and one submission history entry');
  s=await complete(fourTask,true);check(s.earnedPoints===earnedBeforeFour+80,'Linked checkbox cannot duplicate reward');
  s=await edit(tue.id,{stage:'Interview',submissionDate:model.previousDate(s.today)});check(s.earnedPoints===earnedBeforeFour+80&&s.applications.find(a=>a.id===tue.id).opportunity.positionCount===2,'Date correction and later stage preserve award and metadata');
- const archivedFourUI=renderToStaticMarkup(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));check(!archivedFourUI.includes(tue.projectTitle)&&archivedFourUI.includes('9 applications'),'Submission removes advert from Upcoming and updates count');
+ const archivedFourUI=guardedRender(React.createElement(summary.default,{applications:s.applications,today:s.today,onOpen:()=>{}}));check(!archivedFourUI.includes(tue.projectTitle)&&archivedFourUI.includes('9 applications'),'Submission removes advert from Upcoming and updates count');
  s=await edit(tue.id,{stage:'Preparing',submissionDate:null});check(s.earnedPoints===earnedBeforeFour&&applicationsModel.needsPreparation(s.applications.find(a=>a.id===tue.id)),'Undo restores application and corrects award');
  const finalFour=JSON.stringify(s.applications);sqlite.close();sqlite=new DatabaseSync(file);check(JSON.stringify((await state()).applications)===finalFour,'Four records persist after durable database reopen');
  process.env.STEADY_REQUESTED_IMPORT_OWNER=user.userId;process.env.STEADY_REQUESTED_IMPORT_KEY='test-maintenance-secret';
