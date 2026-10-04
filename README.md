@@ -6,6 +6,8 @@ Use Node.js 24 and the pinned pnpm version. Run `npm run install:ci`, `npm run c
 
 Personal records, credentials, browser sessions and local database files must never be committed. GitHub retains the earlier standalone export under `legacy/`; it is a separate snapshot, not the live database.
 
+A separate Supabase backend foundation is now installed and tested. See [supabase/README.md](supabase/README.md) for its access rules, verification and activation requirements. The running app still uses Sites sign-in and D1; this setup does not migrate data or change hosting.
+
 A private personal workspace built with React, TypeScript, Vinext, and a Sites-managed D1 database.
 
 ## Daily foundation

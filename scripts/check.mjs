@@ -10,6 +10,7 @@ const checks=[
  ['scripts/verify-daily-surface.mjs'],
  ['scripts/verify-workspace-clarity.mjs'],
  ['scripts/verify-history.mjs'],
+ ['scripts/verify-supabase-foundation.mjs'],
  ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false'],
  ['node_modules/eslint/bin/eslint.js','.','--ignore-pattern','dist','--ignore-pattern','.next','--max-warnings','0']
 ];
