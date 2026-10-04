@@ -4,7 +4,7 @@
 
 The `supabase-app` branch contains the complete existing application plus verified server-side Google identities and transactional Supabase storage. The live private Sites app is unchanged. Supabase migrations are installed, but real Google sign-in, Vercel deployment and transfer of existing records are not complete.
 
-Deployment is blocked by a Vercel connector 403 for the existing `steady` project in scope `govindjocose-2552`. Reconnect that account/team before deployment. Confirm Hobby/free before continuing; do not activate billing or a paid integration.
+Vercel access works through the default account (omit an explicit team scope). The account was verified on Hobby/free. Next.js build settings and the required server environment are configured. Google is enabled in Supabase. Deployment and real sign-in verification are in progress; do not activate billing or a paid integration.
 
 ## Google provider
 
@@ -20,7 +20,7 @@ Configure these in Vercel, never in tracked files:
 
 - `NEXT_PUBLIC_SUPABASE_URL`: project URL above.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: project's publishable key (not service-role).
-- `STEADY_DATABASE_SERVER_KEY`: a freshly generated random secret of at least 32 bytes. Store only its SHA-256 hex hash in `steady_private.runtime_keys` using an administrator connection. No runtime key is provisioned yet; the database fails closed.
+- `STEADY_DATABASE_SERVER_KEY`: a freshly generated random secret of at least 32 bytes. Store only its SHA-256 hex hash in `steady_private.runtime_keys` using an administrator connection. The runtime key is provisioned securely in Vercel; only its hash is stored in the database.
 - Optional `STEADY_ALLOWED_EMAILS`: comma-separated Google emails if access should be limited to invited friends. Without this restriction, verified Google users can create their own isolated workspace.
 
 Use Next.js framework, Node24, repository root, branch `supabase-app`, `pnpm install --frozen-lockfile` and `pnpm build`. No Cloudflare binding is required for this branch. Keep `steady_data` and `steady_private` **out** of Supabase's exposed API schemas. Browser clients cannot call the transaction function without the separate server secret; RLS also restricts every statement to the verified user. Never use a service-role key for app requests.
