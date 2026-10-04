@@ -3,9 +3,9 @@ import {defaultMotivation,type PointKind} from './motivation';
 import {proofSQL,type Proof} from './motivation-storage';
 // Every statement runs in the same atomic batch as its source activity.
 // SQL guards, frozen award rows and unique ledger keys protect retries and concurrent tabs.
-export function awardStatements(db:D1Database,owner:string,proof:Proof,key:string,kind:PointKind,label:string,date:string|null,beforeCompleted:boolean,completed:boolean,now:string,custom=0,desiredSQL='1'){
+export function awardStatements(db:D1Database,owner:string,proof:Proof,key:string,kind:PointKind,label:string,date:string|null,beforeCompleted:boolean,completed:boolean,now:string,custom=0,desiredSQL='TRUE'){
  const p=proofSQL(owner,proof),day=date||indiaDate(),event=proof.operationId+':'+key,amount=kind==='custom'?String(custom):`COALESCE((SELECT json_extract(data,'$.points.${kind}') FROM motivation_settings WHERE owner_id=?),${defaultMotivation.points[kind]})`,amountArgs=kind==='custom'?[]:[owner];
- const desired=completed?`(${desiredSQL})`:'0',q=(sql:string,...args:(string|number|null)[])=>db.prepare(sql).bind(...args);
+ const desired=completed?`(${desiredSQL})`:'FALSE',q=(sql:string,...args:(string|number|null)[])=>db.prepare(sql).bind(...args);
  const rows:D1PreparedStatement[]=[];
  if(completed&&!beforeCompleted)rows.push(q(`INSERT INTO points_awards(id,owner_id,activity_key,kind,amount,active,activity_date,label,first_awarded_at) SELECT ?,?,?,?,${amount},0,?,?,? WHERE ${p.sql} AND NOT EXISTS(SELECT 1 FROM points_awards WHERE owner_id=? AND activity_key=?)`,crypto.randomUUID(),owner,key,kind,...amountArgs,day,label,now,...p.args,owner,key));
  const base='owner_id=? AND activity_key=?',baseArgs=[owner,key];

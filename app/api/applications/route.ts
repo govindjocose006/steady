@@ -16,7 +16,7 @@ const operation=z.discriminatedUnion('action',[
 ]);
 export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your applications.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch{logFailure('applications.read');return json({error:'Could not load applications. Please retry.'},503);}}
 export async function POST(request:Request){
-  const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
+  const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request,user.userId))return json({error:'Unsupported request.'},403);
   let result;try{const text=await request.text();if(text.length>40000)return json({error:'Application details are too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid application data.'},400);}
   if(!result.success)return json({error:result.error.issues[0]?.message||'Check your application details.'},400);
   const op=result.data,owner=user.userId,now=new Date().toISOString(),fingerprint=JSON.stringify(op);let linkedTaskId:string|undefined;

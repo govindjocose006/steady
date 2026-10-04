@@ -22,7 +22,7 @@ const operation=z.discriminatedUnion('action',[
 ]);
 export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your private records.'},401);try{return json(await readState(user.userId));}catch{logFailure('motivation.read');return json({error:'Could not load your records. Please retry.'},503);}}
 export async function POST(request:Request){
- const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
+ const user=await getChatGPTUser();if(!user)return json({error:'Your session ended. Reload to sign in.'},401);if(!isWriteRequest(request,user.userId))return json({error:'Unsupported request.'},403);
  let parsed;try{const text=await request.text();if(text.length>30000)return json({error:'This record is too long.'},400);parsed=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid record data.'},400);}if(!parsed.success)return json({error:parsed.error.issues[0]?.message||'Check these details.'},400);
  const op=parsed.data,owner=user.userId,now=new Date().toISOString(),day=indiaDate(),fingerprint=JSON.stringify(op),proof={table:'habit_events' as const,operationId:op.operationId};let db:D1Database|undefined;
  try{

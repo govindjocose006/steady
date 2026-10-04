@@ -1,3 +1,15 @@
+# Independent runtime verification — 4 October 2026
+
+- Passed all 581 original application behavioral checks and 352 original foundation/schema checks.
+- Passed 68 real Postgres/API checks: atomic batches, rollback, linked completion, frozen points, refunds, submission correction, shared daily workout award, settings, planning and owner isolation.
+- Passed 22 auth/session safeguards: verified Google identity, rejected anonymous/unconfirmed/provider mismatch, optional allowlist, local redirects, CSRF origin, and account-bound drafts.
+- Passed TypeScript, strict lint, native Next.js production build and unauthenticated production HTTP checks.
+- Applied transaction migration to the new Supabase project. A rollback-only remote transaction/access test passed; security advisor reported no findings. No actual records/users were imported and no runtime key is installed.
+- Browser automation could not start its daemon in this environment. Laptop/phone visual checks, real Google OAuth, authenticated session recovery, deployment persistence and two real signed-in users remain unverified. Vercel access returned 403; Google provider credentials are not configured/verified.
+- Original Sites hosting, permissions and records remain unchanged. This branch has not been deployed. See SETUP.md for the remaining activation and data-transfer steps.
+
+## Earlier Sites verification history
+
 # Verification and source workflow
 
 Both Sites and GitHub `app-source` use the same application, migrations, checks, package scripts and recovery helper. The `.openai/hosting.json` project binding remains unchanged. GitHub retains its `legacy/` offline export. Ignored checkout-local tool files can differ; they are not application source.

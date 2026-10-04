@@ -21,7 +21,7 @@ const operation=z.discriminatedUnion('action',[
 ]);
 export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to see your private tasks.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch{logFailure('tasks.read');return json({error:'Your tasks could not be loaded. Please retry.'},503);}}
 export async function POST(request:Request){
-  const user=await getChatGPTUser();if(!user)return json({error:'Your session has ended. Reload to sign in again.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
+  const user=await getChatGPTUser();if(!user)return json({error:'Your session has ended. Reload to sign in again.'},401);if(!isWriteRequest(request,user.userId))return json({error:'Unsupported request.'},403);
   let result;try{const text=await request.text();if(text.length>8000)return json({error:'Task is too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid task data.'},400);}
   if(!result.success)return json({error:result.error.issues[0]?.message||'Check your task details.'},400);
   const op=result.data,owner=user.userId,fingerprint=JSON.stringify(op),now=new Date().toISOString(),day=indiaDate();
@@ -69,7 +69,7 @@ export async function POST(request:Request){
     const appGuard=app?' AND EXISTS(SELECT 1 FROM applications WHERE id=? AND owner_id=? AND version=?)':'',appParams=app?[app.id,owner,app.version]:[];
     const statements:D1PreparedStatement[]=[];
     if(op.action==='create'){
-      statements.push(db.prepare(`INSERT INTO tasks (id,owner_id,title,goal,kind,due_date,minutes,completed_at,completed_date,created_at,updated_at,version,application_id,application_action_key,custom_points) SELECT ?,?,?,?,?,?,?,NULL,NULL,?,?,1,?,NULL,? WHERE 1${appGuard}`).bind(next.id,owner,next.title,next.goal,next.kind,next.dueDate,next.minutes,now,now,applicationId,next.customPoints??0,...appParams));
+      statements.push(db.prepare(`INSERT INTO tasks (id,owner_id,title,goal,kind,due_date,minutes,completed_at,completed_date,created_at,updated_at,version,application_id,application_action_key,custom_points) SELECT ?,?,?,?,?,?,?,NULL,NULL,?,?,1,?,NULL,? WHERE TRUE${appGuard}`).bind(next.id,owner,next.title,next.goal,next.kind,next.dueDate,next.minutes,now,now,applicationId,next.customPoints??0,...appParams));
       statements.push(taskEvent(db,owner,next,null,action,op.operationId,fingerprint,'EXISTS(SELECT 1 FROM tasks WHERE id=? AND owner_id=?)',[next.id,owner]));
     }else{
       statements.push(taskEvent(db,owner,next,before,action,op.operationId,fingerprint,`EXISTS(SELECT 1 FROM tasks WHERE id=? AND owner_id=? AND version=?)${appGuard}`,[next.id,owner,op.version,...appParams]));

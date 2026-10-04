@@ -1,14 +1,10 @@
-# Steady
+# Steady — independent Google accounts
 
-This repository contains the React/TypeScript application behind the private Steady site. GitHub `app-source` and Sites share application source; publishing still uses the existing private Sites workflow. This is not a standalone Vercel deployment: its authentication and D1 database remain managed by Sites.
+This `supabase-app` branch runs Steady with Next.js, Google sign-in through Supabase, and private per-account Postgres storage. The original `app-source` branch and private Sites deployment remain unchanged. This branch is not yet deployed.
 
-Use Node.js 24 and the pinned pnpm version. Run `npm run install:ci`, `npm run check`, and `npm run build`. Checks run isolated fixtures, TypeScript, and strict lint; they never write to the live database. See [VERIFICATION.md](VERIFICATION.md) for CI, history paging, browser checks and verification limits.
+Use Node.js 24 and the pinned pnpm version. Run `pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build`. For local development run `pnpm dev --hostname 127.0.0.1`. See [SETUP.md](SETUP.md) for deployment and migration requirements.
 
-Personal records, credentials, browser sessions and local database files must never be committed. GitHub retains the earlier standalone export under `legacy/`; it is a separate snapshot, not the live database.
-
-A separate Supabase backend foundation is now installed and tested. See [supabase/README.md](supabase/README.md) for its access rules, verification and activation requirements. The running app still uses Sites sign-in and D1; this setup does not migrate data or change hosting.
-
-A private personal workspace built with React, TypeScript, Vinext, and a Sites-managed D1 database.
+Never commit credentials, auth sessions, or personal exports. All regression fixtures are synthetic. Existing Sites records have **not** been migrated; a new Google account currently starts empty. Do not retire Sites until the explicit owner mapping and row-by-row import have been verified.
 
 ## Daily foundation
 

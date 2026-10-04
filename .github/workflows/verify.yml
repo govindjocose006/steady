@@ -2,7 +2,7 @@ name: Verify Steady
 on:
   pull_request:
   push:
-    branches: [main, app-source]
+    branches: [main, app-source, supabase-app]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,3 +24,5 @@ jobs:
         run: pnpm check
       - name: Production build
         run: pnpm build
+      - name: Production authentication smoke checks
+        run: node scripts/verify-http.mjs

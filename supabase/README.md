@@ -1,3 +1,11 @@
+# Supabase runtime update
+
+This branch includes transactional saving through `public.steady_batch`; all application tables moved to the unexposed `steady_data` schema. The function requires a verified user JWT and a separate server-only secret, and uses invoker RLS. See [../SETUP.md](../SETUP.md) for current activation requirements. No live records have been imported and no runtime key is provisioned.
+
+The notes below document the earlier foundation migration. Its rollback-only `private_access.sql` test applies before the transaction migration. Use `transaction_access.sql` and the Postgres API harness for the current schema.
+
+---
+
 # Steady Supabase backend foundation
 
 Created 4 October 2026 in the owner's selected organisation, on the Free plan in Mumbai (`ap-south-1`). Project reference: `tyrcuqvgazilfaajqwdj`. [Dashboard](https://supabase.com/dashboard/project/tyrcuqvgazilfaajqwdj).

@@ -143,3 +143,10 @@
 @media(max-width:760px){.deadline-editor .form-columns{grid-template-columns:minmax(0,1fr);gap:14px}.upcoming-work-list article{padding:16px}.optional-fields>summary{line-height:1.6}}
 
 .upcoming-work-heading{display:flex;align-items:center;gap:12px;min-width:0}.upcoming-work-heading .task-title{font-size:1rem;text-align:left;min-height:44px;flex:1}.upcoming-work-heading .task-check{flex-shrink:0}
+/* Independent sign-in uses the existing Steady typography and controls. */
+.auth-page{min-height:100dvh;display:grid;place-items:center;padding:1.5rem;}
+.auth-card{width:min(100%,30rem);padding:2rem;border:1px solid #dce4e8;border-radius:1rem;background:white;box-shadow:0 12px 40px #142b3b0a;}
+.auth-card h1{font-size:clamp(1.7rem,5vw,2.3rem);line-height:1.2;margin:1rem 0;}
+.auth-card p{line-height:1.6;margin:1rem 0;}
+.auth-card form .primary-button{width:100%;margin:.5rem 0;min-height:48px;}
+.auth-card a{text-decoration:underline;}

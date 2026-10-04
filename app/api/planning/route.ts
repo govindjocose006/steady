@@ -21,7 +21,7 @@ const operation=z.discriminatedUnion('action',[
 export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to view your plans.'},401);try{return json(await readState(user.userId));}catch{return json({error:'Could not load plans.'},503);}}
 function selected(ids:string[],s:State,existing:string[]=[]){const seen=new Set<string>();return ids.every(id=>{const t=s.tasks.find(t=>t.id===id);if(!t||(!existing.includes(id)&&(!activeTask(t,s)||!!t.completedAt)))return false;const key=activityKey(t);if(seen.has(key))return false;seen.add(key);return true;});}
 export async function POST(request:Request){
- const user=await getChatGPTUser();if(!user)return json({error:'Sign in to save your plan.'},401);if(!isWriteRequest(request))return json({error:'Unsupported request.'},403);
+ const user=await getChatGPTUser();if(!user)return json({error:'Sign in to save your plan.'},401);if(!isWriteRequest(request,user.userId))return json({error:'Unsupported request.'},403);
  let input;try{const body=await request.text();if(body.length>35000)return json({error:'Plan is too long.'},400);input=operation.safeParse(JSON.parse(body));}catch{return json({error:'Invalid planning data.'},400);}if(!input.success)return json({error:input.error.issues[0]?.message||'Check your plan.'},400);
  const op=input.data,owner=user.userId,now=new Date().toISOString(),fingerprint=JSON.stringify(op);
  try{
