@@ -1,0 +1,1482 @@
+[
+  {
+    "table": "application_events",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "application_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "snapshot",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "previous",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "request",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_application_events_owner_sequence",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_application_events_operation",
+        "unique": true,
+        "columns": [
+          "operation_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "applications",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "institution",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "country",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "project_title",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "supervisor",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "link",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "deadline",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "next_action",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "stage",
+        "type": "TEXT",
+        "required": true,
+        "default": "'Shortlisted'"
+      },
+      {
+        "name": "checklist",
+        "type": "TEXT",
+        "required": true,
+        "default": "'[]'"
+      },
+      {
+        "name": "submission_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "submission_task_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      },
+      {
+        "name": "opportunity",
+        "type": "TEXT",
+        "required": true,
+        "default": "'{}'"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_applications_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "day_plans",
+    "columns": [
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_day_plans_owner_date",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "date"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "day_templates",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_day_templates_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "events",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "task_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "snapshot",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "previous",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "request",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_events_owner_sequence",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_events_operation",
+        "unique": true,
+        "columns": [
+          "operation_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "focus_sessions",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "remaining_ms",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "end_at",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "phone_free",
+        "type": "INTEGER",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "completion_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "active_key",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_focus_sessions_active",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "active_key"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "habit_events",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_type",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "snapshot",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "previous",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "request",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_habit_events_owner",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_habit_events_operation",
+        "unique": true,
+        "columns": [
+          "operation_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "habit_records",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "activity_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "completion_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_habit_records_day",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "kind",
+          "completion_date",
+          "status"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "motivation_settings",
+    "columns": [
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "table": "planning_events",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_type",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "snapshot",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "previous",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "request",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_planning_events_owner",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_planning_events_operation",
+        "unique": true,
+        "columns": [
+          "operation_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "points_awards",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "activity_key",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "amount",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "INTEGER",
+        "required": true,
+        "default": "0"
+      },
+      {
+        "name": "activity_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "label",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "first_awarded_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_points_awards_daily",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "kind",
+          "activity_date",
+          "active"
+        ]
+      },
+      {
+        "name": "idx_points_awards_activity",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "activity_key"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "points_ledger",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "event_key",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "activity_key",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "delta",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "activity_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "previous_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "label",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_points_ledger_owner",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_points_ledger_event",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "event_key"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "redemptions",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "reward_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "cost",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "refunded",
+        "type": "INTEGER",
+        "required": true,
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_redemptions_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "rewards",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "required": true,
+        "default": "''"
+      },
+      {
+        "name": "cost",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "archived",
+        "type": "INTEGER",
+        "required": true,
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_rewards_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "tasks",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "goal",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "due_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "minutes",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "completed_at",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "completed_date",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      },
+      {
+        "name": "application_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "application_action_key",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "workspace_record_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "habit_record_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "custom_points",
+        "type": "INTEGER",
+        "required": true,
+        "default": "0"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_tasks_habit_record",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "habit_record_id"
+        ]
+      },
+      {
+        "name": "idx_tasks_workspace_record",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "workspace_record_id"
+        ]
+      },
+      {
+        "name": "idx_tasks_application_action",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "application_id",
+          "application_action_key"
+        ]
+      },
+      {
+        "name": "idx_tasks_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "weekly_reviews",
+    "columns": [
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "week_start",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_weekly_reviews_owner_week",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "week_start"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "workspace_catalog",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "parent_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_workspace_catalog_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "workspace_events",
+    "columns": [
+      {
+        "name": "sequence",
+        "type": "INTEGER",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "entity_type",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "snapshot",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "previous",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "happened_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "local_date",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "request",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_workspace_events_owner_sequence",
+        "unique": false,
+        "columns": [
+          "owner_id",
+          "sequence"
+        ]
+      },
+      {
+        "name": "idx_workspace_events_operation",
+        "unique": true,
+        "columns": [
+          "operation_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "workspace_records",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "source_record_id",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "followup_key",
+        "type": "TEXT",
+        "required": false,
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_workspace_records_followup",
+        "unique": true,
+        "columns": [
+          "owner_id",
+          "source_record_id",
+          "followup_key"
+        ]
+      },
+      {
+        "name": "idx_workspace_records_owner",
+        "unique": false,
+        "columns": [
+          "owner_id"
+        ]
+      }
+    ]
+  },
+  {
+    "table": "workspace_settings",
+    "columns": [
+      {
+        "name": "owner_id",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "data",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "required": true,
+        "default": "1"
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "required": true,
+        "default": null
+      }
+    ],
+    "indexes": []
+  }
+]

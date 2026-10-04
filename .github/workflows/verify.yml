@@ -1,0 +1,26 @@
+name: Verify Steady
+on:
+  pull_request:
+  push:
+    branches: [main, app-source]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: steady-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Isolated regressions, TypeScript and strict lint
+        run: pnpm check
+      - name: Production build
+        run: pnpm build

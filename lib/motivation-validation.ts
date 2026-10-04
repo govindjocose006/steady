@@ -1,0 +1,5 @@
+import {z} from 'zod';
+import {dateSchema} from './validation';
+export const motivationFields=z.object({points:z.object({application:z.number().int().min(0).max(100000),lecture:z.number().int().min(0).max(100000),session:z.number().int().min(0).max(100000),research:z.number().int().min(0).max(100000),focus:z.number().int().min(0).max(100000),workout:z.number().int().min(0).max(100000)}),phoneDailyTarget:z.number().int().min(0).max(1440).nullable(),focusMinutes:z.number().int().min(1).max(240),focusDailyLimit:z.number().int().min(0).max(50),workoutMinutes:z.number().int().min(1).max(1440)});
+export const rewardFields=z.object({name:z.string().trim().min(1,'Name your reward.').max(180),description:z.string().trim().max(2000).default(''),cost:z.number().int().min(1,'Enter a cost of at least one point.').max(100000),archived:z.boolean().default(false)});
+export const habitFields=z.object({activityName:z.string().trim().max(180).default(''),date:dateSchema,minutes:z.number().int().min(0).max(1440),notes:z.string().max(10000).default(''),status:z.enum(['Logged','Planned','Completed','Rest']),completionDate:dateSchema.nullable().default(null)});
