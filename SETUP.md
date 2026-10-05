@@ -2,9 +2,11 @@
 
 ## Current status
 
-The `supabase-app` branch contains the complete existing application plus verified server-side Google identities and transactional Supabase storage. The live private Sites app is unchanged. Supabase migrations are installed, but real Google sign-in, Vercel deployment and transfer of existing records are not complete.
+The `supabase-app` branch contains the complete existing application plus verified server-side Google identities and transactional Supabase storage. Production is live at https://steady-kappa-two.vercel.app/. Real Google login and refresh/session recovery were verified on 5 October 2026. The original private Sites app and all of its records remain unchanged.
 
-Vercel access works through the default account (omit an explicit team scope). The account was verified on Hobby/free. Next.js build settings and the required server environment are configured. Google is enabled in Supabase. Deployment and real sign-in verification are in progress; do not activate billing or a paid integration.
+Vercel access works through the default account (omit an explicit team scope). The account is on Hobby/free. Next.js build settings, server environment and Supabase production return URLs are configured. Do not activate billing or a paid integration. Personal-record transfer remains pending a complete lossless Sites export: three long application-history values were truncated by the tooling. The new Google workspace starts empty.
+
+Production was promoted from `supabase-app` through Vercel. Keep subsequent deployments on this branch; production branch tracking has not yet been verified. Do not merge the independent runtime over the original Sites branch.
 
 ## Google provider
 
@@ -33,4 +35,4 @@ Do not match accounts by unverified metadata or automatically by email. First si
 
 `pnpm check` covers the original application regressions, schema checks, real Postgres API transactions and auth safeguards, plus TypeScript and strict lint. `pnpm build` is a native Next.js production build. The Postgres harness uses an isolated in-memory database with synthetic users and never uses the live project. `supabase/tests/transaction_access.sql` is a rollback-only remote access test.
 
-After deployment verify actual Google login/logout, refresh/session expiry, two-user isolation, mobile/desktop layouts and private data persistence. These require provider credentials and a reachable deployment; unit tests do not replace them.
+Real production Google login, desktop Today and session recovery after refresh passed. Still verify logout/session expiry, two-user isolation with real accounts, mobile layouts and production save persistence. Unit tests do not replace those checks. See VERIFICATION.md for the dated evidence and limitations.

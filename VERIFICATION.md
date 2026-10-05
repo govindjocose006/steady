@@ -1,12 +1,15 @@
-# Independent runtime verification — 4 October 2026
+# Independent runtime verification — 5 October 2026
 
 - Passed all 581 original application behavioral checks and 352 original foundation/schema checks.
 - Passed 68 real Postgres/API checks: atomic batches, rollback, linked completion, frozen points, refunds, submission correction, shared daily workout award, settings, planning and owner isolation.
 - Passed 22 auth/session safeguards: verified Google identity, rejected anonymous/unconfirmed/provider mismatch, optional allowlist, local redirects, CSRF origin, and account-bound drafts.
-- Passed TypeScript, strict lint, native Next.js production build and unauthenticated production HTTP checks.
-- Applied transaction migration to the new Supabase project. A rollback-only remote transaction/access test passed; security advisor reported no findings. No actual records/users were imported and no runtime key is installed.
-- Browser automation could not start its daemon in this environment. Laptop/phone visual checks, real Google OAuth, authenticated session recovery, deployment persistence and two real signed-in users remain unverified. Vercel access returned 403; Google provider credentials are not configured/verified.
-- Original Sites hosting, permissions and records remain unchanged. This branch has not been deployed. See SETUP.md for the remaining activation and data-transfer steps.
+- Passed TypeScript, strict lint, native Next.js production build and unauthenticated preview HTTP checks. GitHub CI passed for the independent implementation.
+- Supabase migrations and the server runtime key are installed. A rollback-only remote transaction/access test passed; the security advisor reported no findings.
+- Production is live at https://steady-kappa-two.vercel.app/ using commit bc891e02a40d080bf321c605e1a6a7e9d67c20b7. Vercel reported READY. Supabase Site URL and the exact production /auth/callback redirect were saved.
+- Real Google sign-in succeeded. The server-verified Google account opened Today, displayed Saved, and recovered the signed-in session after a browser reload. Desktop Today was visually checked.
+- Not verified in production: writes and their persistence, logout/expired-session recovery, two real signed-in users, phone layouts, keyboard/zoom, and background focus-timer behavior. Automated isolated tests do not replace those checks.
+- Original Sites hosting, permissions and records remain unchanged. No personal records have been imported. The authorized Sites export was inspected across all 20 tables, but three application-history snapshot values were truncated by the export tool, even at one row per request. Import is blocked until a complete lossless snapshot is available; do not reconstruct or drop these values.
+- Vercel remains Hobby/free. No paid upgrade or payment method was added.
 
 ## Earlier Sites verification history
 

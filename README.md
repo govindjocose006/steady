@@ -1,6 +1,6 @@
 # Steady — independent Google accounts
 
-This `supabase-app` branch runs Steady with Next.js, Google sign-in through Supabase, and private per-account Postgres storage. The original `app-source` branch and private Sites deployment remain unchanged. This branch is not yet deployed.
+This `supabase-app` branch runs Steady with Next.js, Google sign-in through Supabase, and private per-account Postgres storage. The original `app-source` branch and private Sites deployment remain unchanged. Production is live at https://steady-kappa-two.vercel.app/. Google sign-in and session recovery after refresh were verified on 5 October 2026.
 
 Use Node.js 24 and the pinned pnpm version. Run `pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build`. For local development run `pnpm dev --hostname 127.0.0.1`. See [SETUP.md](SETUP.md) for deployment and migration requirements.
 
