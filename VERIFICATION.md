@@ -1,3 +1,11 @@
+# Android installation update — 11 October 2026
+
+- Added an online-only installable manifest, 192/512px maskable brand icons, theme metadata, and accessible installation help on login and the dashboard. No service worker or offline record cache was introduced.
+- Passed the complete existing check suite, TypeScript and strict lint, native production build, and extended HTTP checks for public manifest/icon availability, PNG dimensions, standalone launch configuration, private route rejection and cross-origin rejection.
+- Only UI/metadata/proxy static-resource matching and smoke checks changed. No database, accounting, history, identity or storage writes were performed.
+- Sites export remains truncated. Supabase contains new tasks, so migration must merge against the current account rather than assume an empty destination. Do not overwrite new records or reconstruct missing historical snapshots.
+- Physical Android installation, installed-window Google OAuth, and mobile device behavior remain unverified. Earlier verification below is dated evidence, not a claim of re-testing those browser flows today.
+
 # Independent runtime verification — 5 October 2026
 
 - Passed all 581 original application behavioral checks and 352 original foundation/schema checks.

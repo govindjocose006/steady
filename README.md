@@ -85,3 +85,7 @@ Deadline badges use India display dates. Exact official closing instants are sto
 Submission hides the application and its linked tasks from active lists without deleting records. History keeps archived details and one application submission event per workflow; linked submission-task audit rows remain saved but are not repeated as separate submission entries in the main History view. Manual completion/date correction/undo synchronizes linked submission checkboxes, while the canonical application award is maintained once. Later stages preserve submission dates and awards.
 
 `node scripts/verify-opportunities.mjs` adds 38 checks of import deduplication, preservation, editing, sorts/badge boundaries, exact closing times, rendering, shared UFAST awards/history, archive/undo, persistence and isolation. The completed one-time maintenance import endpoint is retired and returns 410; normal signed-in application editing remains available. No seed data is placed in schema migrations.
+
+## Android home-screen app
+
+Open https://steady-kappa-two.vercel.app/ in Android Chrome. Choose the browser menu → Add to Home screen → Install. Launch the Steady icon and use the same Google account. The in-app Install Steady button explains these steps without navigating away or touching drafts. This is an online PWA, with no Play Store account or payment required. It does not cache private records or queue offline edits. Wait for Saved before closing. Installation does not transfer the original Sites records.

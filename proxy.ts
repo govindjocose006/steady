@@ -6,4 +6,4 @@ export async function proxy(request:NextRequest){
  const client=createServerClient(url,key,{cookieOptions:{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production'},cookies:{getAll:()=>request.cookies.getAll(),setAll(values,cacheHeaders){for(const {name,value} of values)request.cookies.set(name,value);response=NextResponse.next({request});for(const {name,value,options} of values)response.cookies.set(name,value,options);for(const [name,value] of Object.entries(cacheHeaders||{}))response.headers.set(name,value);response.headers.set('Cache-Control','private, no-store');}}});
  try{await client.auth.getClaims();}catch{/* Protected handlers reject unverifiable sessions. */}return response;
 }
-export const config={matcher:['/((?!_next/static|_next/image|favicon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']};
+export const config={matcher:['/((?!_next/static|_next/image|favicon.svg|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']};
