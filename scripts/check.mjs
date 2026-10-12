@@ -13,6 +13,7 @@ const checks=[
  ['scripts/verify-supabase-foundation.mjs'],
  ['scripts/verify-postgres.mjs'],
  ['scripts/verify-auth.mjs'],
+ ['scripts/verify-offline.mjs'],
  ['node_modules/typescript/bin/tsc','--noEmit','--incremental','false'],
  ['node_modules/eslint/bin/eslint.js','.','--ignore-pattern','dist','--ignore-pattern','.next','--max-warnings','0']
 ];

@@ -17,19 +17,22 @@ const fields=z.object({title:z.string().trim().min(1).max(180),goal:z.enum(['phd
 const operation=z.discriminatedUnion('action',[
   z.object({action:z.literal('create'),operationId:z.string().uuid(),id:z.string().uuid(),fields}),
   z.object({action:z.literal('edit'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),fields}),
-  z.object({action:z.literal('complete'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),completed:z.boolean()})
+  z.object({action:z.literal('complete'),operationId:z.string().uuid(),id:z.string().uuid(),version:z.number().int().positive(),completed:z.boolean(),completedAt:z.string().datetime().optional()})
 ]);
 export async function GET(){const user=await getChatGPTUser();if(!user)return json({error:'Sign in to see your private tasks.'},401);try{await repairOpportunityOwnership(user);return json(await readState(user.userId));}catch{logFailure('tasks.read');return json({error:'Your tasks could not be loaded. Please retry.'},503);}}
 export async function POST(request:Request){
   const user=await getChatGPTUser();if(!user)return json({error:'Your session has ended. Reload to sign in again.'},401);if(!isWriteRequest(request,user.userId))return json({error:'Unsupported request.'},403);
   let result;try{const text=await request.text();if(text.length>8000)return json({error:'Task is too long.'},400);result=operation.safeParse(JSON.parse(text));}catch{return json({error:'Invalid task data.'},400);}
   if(!result.success)return json({error:result.error.issues[0]?.message||'Check your task details.'},400);
-  const op=result.data,owner=user.userId,fingerprint=JSON.stringify(op),now=new Date().toISOString(),day=indiaDate();
+  const op=result.data,owner=user.userId,fingerprint=JSON.stringify(op),now=new Date().toISOString();
+  const completedAt=op.action==='complete'&&op.completed&&op.completedAt?op.completedAt:now,day=indiaDate(new Date(completedAt));
+  if(Date.parse(completedAt)>Date.parse(now)+300000)return json({error:'The completion time is in the future. Correct your device clock and retry.'},400);
   try{
     const db=getDb(),duplicate=await db.prepare('SELECT request FROM events WHERE operation_id=? AND owner_id=?').bind(op.operationId,owner).first<{request:string}>();
     if(duplicate)return duplicate.request===fingerprint?json(await readState(owner)):json({error:'This save was already processed. Close and reopen the task for another change.'},409);
     let before:Task|null=null;
     if(op.action!=='create'){before=await readTask(owner,op.id);if(!before)return json({error:'Task not found.'},404);if(before.version!==op.version)return json({error:'This task changed in another tab. Your latest tasks have been loaded; reopen it to edit.'},409);}
+    if(before&&op.action==='complete'&&op.completed&&Date.parse(completedAt)<Date.parse(before.createdAt))return json({error:'Completion cannot be before this task was created.'},400);
     if(before?.habitRecordId&&op.action!=='create'){
       if(op.action==='edit')return json({error:'Edit workouts and rest days from Habits.'},400);
       const record=await readHabit(owner,before.habitRecordId);if(!record)return json({error:'Workout not found.'},404);if(record.status==='Rest')return json({error:'Rest days need no completion checkbox.'},400);
@@ -42,7 +45,7 @@ export async function POST(request:Request){
       const record=await readWorkspaceRecord(owner,before.workspaceRecordId);if(!record)return json({error:'The linked record is unavailable. Please retry.'},503);
       if(op.action==='edit'&&(op.fields.goal!==before.goal||op.fields.kind!==recordTaskKind(record)||op.fields.applicationId))return json({error:'Change this record’s activity details from its Study or Research page.'},400);
       if(op.action==='complete'&&Boolean(before.completedAt)===op.completed)return json(await readState(owner));
-      const nextTask:Task={...before,...(op.action==='edit'?op.fields:{completedAt:op.completed?now:null,completedDate:op.completed?day:null}),workspaceRecordId:before.workspaceRecordId,updatedAt:now,version:before.version+1};
+      const nextTask:Task={...before,...(op.action==='edit'?op.fields:{completedAt:op.completed?completedAt:null,completedDate:op.completed?day:null}),workspaceRecordId:before.workspaceRecordId,updatedAt:now,version:before.version+1};
       const nextRecord:WorkspaceRecord={...record,...(op.action==='edit'?{title:nextTask.title,plannedDate:nextTask.dueDate,estimatedMinutes:nextTask.minutes}:{status:op.completed?'Completed':'In progress',completionDate:op.completed?day:null}),updatedAt:now,version:record.version+1};
       if(nextRecord.sourceRecordId&&op.action==='edit'){const conflict=await db.prepare('SELECT id FROM workspace_records WHERE owner_id=? AND source_record_id=? AND followup_key=? AND id<>?').bind(owner,nextRecord.sourceRecordId,followupKey(nextRecord),nextRecord.id).first();if(conflict)return json({error:'A revision with this title and date already exists. Choose a different title or date.'},409);}
       const action=op.action==='edit'?'edited':op.completed?'completed':'reopened';
@@ -55,7 +58,7 @@ export async function POST(request:Request){
       return json(await readState(owner));
     }
     const applicationId=op.action==='complete'?before!.applicationId??null:op.fields.applicationId===undefined?before?.applicationId??null:op.fields.applicationId;
-    const next:Task=op.action==='create'?{id:op.id,...op.fields,applicationId,applicationActionKey:null,completedAt:null,completedDate:null,createdAt:now,updatedAt:now,version:1}:{...before!,...(op.action==='edit'?op.fields:{completedAt:op.completed?now:null,completedDate:op.completed?day:null}),applicationId,applicationActionKey:before!.applicationId===applicationId?before!.applicationActionKey??null:null,updatedAt:now,version:before!.version+1};
+    const next:Task=op.action==='create'?{id:op.id,...op.fields,applicationId,applicationActionKey:null,completedAt:null,completedDate:null,createdAt:now,updatedAt:now,version:1}:{...before!,...(op.action==='edit'?op.fields:{completedAt:op.completed?completedAt:null,completedDate:op.completed?day:null}),applicationId,applicationActionKey:before!.applicationId===applicationId?before!.applicationActionKey??null:null,updatedAt:now,version:before!.version+1};
     if(next.applicationId&&next.goal!=='phd')return json({error:'Only PhD tasks can link to an application.'},400);
     if(op.action==='edit'&&before!.completedAt&&(before!.goal!==next.goal||before!.kind!==next.kind||(before!.applicationId&&before!.applicationId!==next.applicationId)))return json({error:'Undo completion before changing the goal, activity type, or an existing application link.'},400);
     let app:Application|null=null,updatedApp:Application|null=null;

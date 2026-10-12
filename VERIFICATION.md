@@ -1,3 +1,7 @@
+# Offline tasks verification — 12 October 2026
+
+The opt-in offline queue uses a public-only cached shell, IndexedDB device records, a cross-tab Web Lock and existing authenticated task operations. No database schema, hosting, identity configuration or personal data was changed. Added isolated coverage for lost-response replay, undo, queue preservation on conflicts/account mismatch/storage failure, India midnight completion dates, and service-worker cache boundaries. Passed the existing regression suites, TypeScript, lint, production build and extended HTTP checks. The generated public offline shell references nine static assets, all present in the build. Physical Android airplane-mode launch, storage eviction, and multi-device end-to-end sync remain unverified; simulated worker/network checks are not a substitute.
+
 # Android installation update — 11 October 2026
 
 - Added an online-only installable manifest, 192/512px maskable brand icons, theme metadata, and accessible installation help on login and the dashboard. No service worker or offline record cache was introduced.

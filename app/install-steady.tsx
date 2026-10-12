@@ -19,7 +19,7 @@ export default function InstallSteady() {
           <li>Open Steady from its icon and sign in with your Google account if asked.</li>
         </ol>
         <p className="field-help">Already installed? Open the Steady icon on your home screen. On a laptop, use the browser’s install option if available.</p>
-        <p className="field-help">Internet is required for sign-in, loading and saving. Wait for Saved before closing. Installing does not copy records from the original Sites app.</p>
+        <p className="field-help">Internet is required for sign-in and syncing. To work without it, enable Offline on this device from your workspace first. Installing does not copy records from the original Sites app.</p>
         <div className="dialog-actions"><Dialog.Close asChild><button type="button" className="primary-button">Got it</button></Dialog.Close></div>
       </Dialog.Content>
     </Dialog.Portal>

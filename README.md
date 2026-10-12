@@ -88,4 +88,12 @@ Submission hides the application and its linked tasks from active lists without 
 
 ## Android home-screen app
 
-Open https://steady-kappa-two.vercel.app/ in Android Chrome. Choose the browser menu → Add to Home screen → Install. Launch the Steady icon and use the same Google account. The in-app Install Steady button explains these steps without navigating away or touching drafts. This is an online PWA, with no Play Store account or payment required. It does not cache private records or queue offline edits. Wait for Saved before closing. Installation does not transfer the original Sites records.
+Open https://steady-kappa-two.vercel.app/ in Android Chrome. Choose the browser menu → Add to Home screen → Install. Launch the Steady icon and use the same Google account. The in-app Install Steady button explains these steps without navigating away or touching drafts. The PWA needs no Play Store account or payment. Optional offline tasks are available on trusted devices; enable them explicitly using Offline. Wait for Saved on this device before closing an offline edit, and for Synced before clearing local storage. Installation does not transfer the original Sites records.
+
+## Optional offline tasks
+
+While signed in and online, choose Offline → Enable offline on this device. This stores pending tasks and current/future plans in IndexedDB, separate from unsaved form drafts. Open Offline tasks before disconnecting. The public app shell and static assets are cached; authenticated pages, API responses, tokens, rewards and history are not cached by the service worker. Anyone with access to the unlocked device can potentially read the local task copy.
+
+Offline tasks supports editing existing task titles, work dates and estimated minutes, and completion/undo. Completion timestamps retain their Asia/Kolkata dates on delayed sync. Points are not awarded locally. Sync / refresh uses the existing authenticated, version-checked, idempotent task API. It also runs when connection returns while Offline tasks is open; closed-app background syncing is not provided. A conflict pauses the queue without overwriting the server. Clear device copy explicitly discards unsynced work; already synced changes remain on the server. Sign-out blocks while changes are queued and otherwise removes the local copy. Do not clear browser data or uninstall with unsynced work. Browsers can evict device storage, so sync regularly.
+
+This first stage does not provide offline reward redemption, new-record creation, research-note editing, plan editing or access to the other full pages. The original Sites migration remains separate and blocked by incomplete history exports.

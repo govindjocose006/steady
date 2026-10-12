@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Steady \u2014 Your daily progress",
   "short_name": "Steady",
-  "description": "Your private daily workspace for applications, study and research. Internet connection required.",
+  "description": "Your private daily workspace for applications, study and research. Optional offline tasks on trusted devices.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

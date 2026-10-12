@@ -50,5 +50,15 @@ try{
   const page=await(await api.GET()).json();check(page.events.length===50&&page.hasMore,'History has bounded first page');
   const older=await(await history.GET(new Request('https://steady.test/api/history?before='+page.events.at(-1).sequence))).json();check(older.events.length===3&&!older.hasMore,'Older history can be loaded');
   user={userId:'other-owner',email:'other@example.invalid'};const privateHistory=await(await history.GET(new Request('https://steady.test/api/history?before=9999'))).json();check(privateHistory.events.length===0,'History pagination respects ownership');
+  user={userId:'test-owner',email:'test@example.invalid'};
+  const offId=uuid();await call({action:'create',operationId:uuid(),id:offId,fields:{...fields,title:'Offline date fixture'}});
+  sqlite.prepare('UPDATE tasks SET created_at=? WHERE id=?').run('2026-09-01T00:00:00.000Z',offId);
+  const offlineComplete={action:'complete',operationId:uuid(),id:offId,version:1,completed:true,completedAt:'2026-09-30T18:29:59.000Z'};
+  const offResult=await call(offlineComplete);check(offResult.status===200&&offResult.body.tasks.find(t=>t.id===offId).completedDate==='2026-09-30','Offline completion keeps its recorded India date across delayed sync');
+  const offRepeat=await call(offlineComplete);check(offRepeat.status===200&&offRepeat.body.tasks.find(t=>t.id===offId).version===2,'Offline response-loss replay does not complete twice');
+  await call({action:'complete',operationId:uuid(),id:offId,version:2,completed:false});
+  check((await call({...offlineComplete,operationId:uuid(),version:3,completedAt:'2099-01-01T00:00:00.000Z'})).status===400,'Future offline time rejected');
+  check((await call({...offlineComplete,operationId:uuid(),version:3,completedAt:'2026-08-01T00:00:00.000Z'})).status===400,'Offline completion before task creation rejected');
+  const afterMidnight=await call({...offlineComplete,operationId:uuid(),version:3,completedAt:'2026-09-30T18:30:00.000Z'});check(afterMidnight.body.tasks.find(t=>t.id===offId).completedDate==='2026-10-01','Offline recompletion crosses India midnight accurately');
   console.log(`PASS: ${checks} checks covering create/edit/complete/undo, durable history, retries, conflicts, privacy, input validation, and India date rollover.`);
 }finally{sqlite.close();rmSync(directory,{recursive:true,force:true});delete globalThis.__steadyTest;}
