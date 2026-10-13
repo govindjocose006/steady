@@ -12,9 +12,12 @@ export function applyOffline(data:OfflineData,op:OfflineOperation):OfflineData{
  const next={...task,...(op.action==='edit'?op.fields:{completedAt:op.completed?op.completedAt!:null,completedDate:op.completed?indiaDate(new Date(op.completedAt!)):null}),version:task.version+1};
  return {...data,tasks:data.tasks.map(t=>t.id===op.id?next:t),queue:[...data.queue,op]};
 }
-export function acknowledge(data:OfflineData,operationId:string):OfflineData{
+export function acknowledge(data:OfflineData,operationId:string,confirmedAt?:string):OfflineData{
  if(data.queue[0]?.operationId!==operationId)throw new Error('Queue changed. Reload and retry.');
- return {...data,queue:data.queue.slice(1)};
+ // Keep optimistic edits for operations still queued, but advance the server
+ // watermark even if the final refresh fails. Older tabs must not replace it.
+ const sourceAt=confirmedAt&&Date.parse(confirmedAt)>Date.parse(data.sourceAt)?confirmedAt:data.sourceAt;
+ return {...data,sourceAt,queue:data.queue.slice(1)};
 }
 
 export function mayRefreshOffline(saved:OfflineData,state:State){return saved.accountId===state.accountId&&!saved.queue.length&&Date.parse(state.serverNow)>=Date.parse(saved.sourceAt||saved.savedAt);}

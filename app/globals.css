@@ -154,3 +154,38 @@
 .install-steps{list-style:decimal;padding-left:22px;line-height:1.7}.install-steps li{margin:10px 0}.install-button{min-height:44px;white-space:nowrap}.auth-card>.install-button{display:block;margin:12px 0}.topbar .install-button{margin-left:auto}
 
 .offline-page{max-width:850px;margin:0 auto;padding:28px 20px 70px}.offline-page h1{font-size:30px}.offline-page h2{font-size:20px;margin:24px 0 12px}.offline-page section{margin-top:24px}.offline-actions{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.offline-task{display:flex;align-items:center;gap:10px;background:white;border:1px solid #d8dfd7;border-radius:10px;padding:16px;margin:10px 0}.offline-task>div{flex:1;min-width:0;overflow-wrap:anywhere}.offline-task p{font-size:13px;color:#57675c;margin-top:6px}.offline-editor label{display:block;margin:15px 0}.offline-editor input{display:block;width:100%;padding:12px;border:1px solid #aab8ad;border-radius:6px;background:white}.offline-page button,.offline-page a{min-height:44px}@media(max-width:550px){.offline-task{flex-wrap:wrap}.offline-task>div{flex-basis:100%}}
+
+/* Keep controls readable as phone widths and text sizes change. */
+.topbar{height:auto;min-height:72px;gap:12px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+.topbar .breadcrumb{min-width:0;flex-wrap:wrap;row-gap:6px}
+.topbar .save-status{white-space:normal;line-height:1.5}
+.task-dialog p,.offline-page>p{line-height:1.65}
+.offline-page>p{margin-top:12px}
+.offline-task{gap:14px;padding:20px}
+.offline-task strong{display:block;line-height:1.55}
+.offline-task p{line-height:1.6}
+.offline-editor label{line-height:1.6}
+.offline-editor input{margin-top:8px;min-width:0}
+@media(max-width:760px){
+ .topbar{padding:14px 18px;gap:10px 14px}
+ .topbar .breadcrumb{flex-basis:100%}
+ .topbar .save-status{flex-basis:100%;padding-top:4px}
+ .topbar .text-button{min-height:44px}
+ .task-dialog{padding:24px 20px;max-height:calc(100dvh - 24px)}
+ .task-dialog .form-columns{grid-template-columns:minmax(0,1fr);gap:16px}
+ .task-dialog .form-columns>div{min-width:0}
+ .task-dialog textarea{font-size:16px}
+ .dialog-heading{gap:14px;align-items:flex-start}
+ .dialog-actions{gap:12px}
+ .dialog-actions>button{min-height:44px;white-space:normal;line-height:1.5}
+ .application-card-top{align-items:flex-start;flex-wrap:wrap;gap:12px}
+ .application-card-next{flex-direction:column;gap:6px}
+ .task-meta{flex-wrap:wrap;gap:8px;line-height:1.6}
+}
+@media(max-width:550px){
+ .offline-page{padding:24px 16px 48px}
+ .offline-task{gap:12px;padding:18px}
+ .offline-task>button{flex:1;justify-content:center}
+ .offline-actions>*{flex:1 1 160px;text-align:center;justify-content:center;line-height:1.5}
+ .task-dialog .dialog-actions>button{flex:1 1 140px;justify-content:center}
+}

@@ -22,6 +22,19 @@ data=applyOffline(snapshot(state),op);const queued=JSON.stringify(data);
 await assert.rejects(()=>syncOffline(async()=>data,async d=>{data=d;},async endpoint=>endpoint==='/api/account'?Response.json({id:'other'}):assert.fail('No cross-account POST')),/different account/);assert.equal(JSON.stringify(data),queued);
 await assert.rejects(()=>syncOffline(async()=>data,async d=>{data=d;},async endpoint=>endpoint==='/api/account'?Response.json({id:'owner'}):Response.json({error:'changed'},{status:409})),/Sync paused/);assert.equal(JSON.stringify(data),queued);
 await assert.rejects(()=>syncOffline(async()=>data,async()=>{throw Error('quota');},async endpoint=>endpoint==='/api/account'?Response.json({id:'owner'}):Response.json(state)),/quota/);assert.equal(JSON.stringify(data),queued);
+// A committed operation must advance the cache watermark even when refresh fails.
+data=applyOffline(snapshot(state),op);
+const confirmed={...state,serverNow:'2026-10-11T13:00:00Z'};
+await assert.rejects(()=>syncOffline(async()=>data,async d=>{data=d;},async(endpoint,options)=>endpoint==='/api/account'?Response.json({id:'owner'}):options?.method==='POST'?Response.json(confirmed):Response.json({error:'unavailable'},{status:503})),/refreshed task list/);
+assert.equal(data.queue.length,0);assert.ok(data.tasks[0].completedAt);
+assert.equal(data.sourceAt,confirmed.serverNow);
+assert.equal(mayRefreshOffline(data,{...state,serverNow:'2026-10-11T12:30:00Z'}),false,'Older tab cannot revert confirmed completion after failed refresh');
+assert.equal(mayRefreshOffline(data,{...state,serverNow:'2026-10-11T13:01:00Z'}),true);
+// A later queued edit remains intact when an earlier operation is acknowledged.
+data=applyOffline(applyOffline(snapshot(state),op),{...op,operationId:'undo',version:2,completed:false});
+let sent=0;
+await assert.rejects(()=>syncOffline(async()=>data,async d=>{data=d;},async(endpoint)=>endpoint==='/api/account'?Response.json({id:'owner'}):++sent===1?Response.json(confirmed):Response.json({error:'conflict'},{status:409})),/Sync paused/);
+assert.equal(data.queue.length,1);assert.equal(data.queue[0].operationId,'undo');assert.equal(data.tasks[0].completedAt,null);assert.equal(data.sourceAt,confirmed.serverNow);
 const events={},entries=new Map();const bucket={put:async(k,v)=>entries.set(typeof k==='string'?k:k.url,v),match:async k=>entries.get(typeof k==='string'?k:k.url),addAll:async assets=>{assert.ok(assets.every(a=>a.startsWith('/_next/static/')));}};
 let fail=false;vm.runInNewContext(fs.readFileSync('public/offline-worker.js','utf8'),{URL,Response,Set,self:{location:{origin:'https://steady.test'},addEventListener:(n,f)=>events[n]=f,skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches:{open:async()=>bucket,keys:async()=>[],match:async k=>entries.get(k)},fetch:async(url,options)=>{if(fail)throw Error('offline');if(url==='/offline'){assert.equal(options.credentials,'omit');return new Response('<html><script src="/_next/static/app.js"></script></html>');}return new Response('public script');}});
 let install;events.install({waitUntil:p=>install=p});await install;assert.ok(entries.has('/offline'));fail=true;
