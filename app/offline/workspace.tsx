@@ -1,5 +1,5 @@
 'use client';
-import {useCallback,useEffect,useState,type FormEvent} from 'react';
+import {useCallback,useEffect,useRef,useState,type FormEvent} from 'react';
 import {applyOffline,type OfflineData,type OfflineOperation} from '@/lib/offline';
 import {offlineLock,readOffline,writeOffline} from '@/lib/offline-device';
 import {syncOffline} from '@/lib/offline-sync';
@@ -7,8 +7,15 @@ import {goalNames,indiaDate,duration,type Task} from '@/lib/tasks';
 export default function OfflineWorkspace(){
  const [data,setData]=useState<OfflineData|null>(null),[loaded,setLoaded]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[blocked,setBlocked]=useState(false),[editing,setEditing]=useState<Task|null>(null);
  const load=useCallback(async()=>{try{setData(await readOffline());}catch{setMessage('Device storage could not be opened. Try again in Chrome.');}setLoaded(true);},[]);
- const sync=useCallback(async()=>{setBusy(true);try{await offlineLock(()=>syncOffline(readOffline,writeOffline));setMessage('Synced. Points and history are confirmed by the server.');setBlocked(false);}catch(e){if(e instanceof Error&&/different account|Account changed/.test(e.message))setBlocked(true);setMessage(e instanceof Error?e.message:'Unable to connect. Changes are retained on this device.');}finally{await load();setBusy(false);}},[load]);
- useEffect(()=>{let active=true;void(async()=>{const local=await readOffline().catch(()=>null);if(navigator.onLine){try{const r=await fetch('/api/account',{cache:'no-store',signal:AbortSignal.timeout(15000)});if(r.ok&&(await r.json() as {id?:string}).id!==local?.accountId&&local){if(active){setBlocked(true);setMessage('A different account is signed in. Switch back to the original account, or clear this device copy.');}}}catch{/* Offline copy was explicitly enabled on this device. */}}if(active){setData(local);setLoaded(true);}})();const online=()=>{if(!editing)void sync();};window.addEventListener('online',online);return()=>{active=false;window.removeEventListener('online',online);};},[sync,editing]);
+ const syncing=useRef(false);
+ const sync=useCallback(async()=>{if(syncing.current)return;syncing.current=true;setBusy(true);try{await offlineLock(()=>syncOffline(readOffline,writeOffline));setMessage('Synced. Points and history are confirmed by the server.');setBlocked(false);}catch(e){if(e instanceof Error&&/different account|Account changed/.test(e.message))setBlocked(true);setMessage(e instanceof Error?e.message:'Unable to connect. Changes are retained on this device.');}finally{await load();setBusy(false);syncing.current=false;}},[load]);
+ useEffect(()=>{
+  let active=true;
+  const resume=()=>{if(active&&!editing&&navigator.onLine&&document.visibilityState==='visible')void sync();};
+  void(async()=>{const local=await readOffline().catch(()=>null);if(!active)return;if(local&&!editing&&navigator.onLine&&document.visibilityState==='visible')resume();else{setData(local);setLoaded(true);}})();
+  window.addEventListener('online',resume);window.addEventListener('focus',resume);document.addEventListener('visibilitychange',resume);
+  return()=>{active=false;window.removeEventListener('online',resume);window.removeEventListener('focus',resume);document.removeEventListener('visibilitychange',resume);};
+ },[sync,editing]);
  useEffect(()=>{if(!editing)return;const warn=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[editing]);
  async function queue(op:OfflineOperation){setBusy(true);try{await offlineLock(async()=>{const current=await readOffline();if(!current||current.accountId!==data?.accountId)throw new Error('Offline account changed. Reload.');await writeOffline(applyOffline(current,op));});await load();setEditing(null);setMessage('Saved on this device · Waiting to sync');}catch(e){setMessage(e instanceof Error?e.message:'Device save failed. Keep your input and retry.');}finally{setBusy(false);}}
  function complete(task:Task){void queue({action:'complete',id:task.id,version:task.version,operationId:crypto.randomUUID(),completed:!task.completedAt,...(!task.completedAt?{completedAt:new Date().toISOString()}:{})});}

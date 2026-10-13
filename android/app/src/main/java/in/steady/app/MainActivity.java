@@ -19,6 +19,7 @@ public final class MainActivity extends Activity {
     private final Runnable tick=new Runnable(){public void run(){if(safe(()->refresh()))handler.postDelayed(this,1000);}};
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        Alarms.channel(this);
         ScrollView scroll=new ScrollView(this);
         LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(24),dp(24),dp(24),dp(32));
         scroll.addView(body);scroll.setFillViewport(true);setContentView(scroll);
@@ -63,12 +64,16 @@ public final class MainActivity extends Activity {
                 && (!DeviceStore.get(this).getBoolean("notificationAsked",false) || shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS))) {
                 DeviceStore.save(DeviceStore.get(this).edit().putBoolean("notificationAsked",true));
                 requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},11);
+            } else if(getSystemService(NotificationManager.class).areNotificationsEnabled()) {
+                startActivity(new Intent(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName())
+                    .putExtra(android.provider.Settings.EXTRA_CHANNEL_ID,Alarms.CHANNEL));
             } else startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));
         });
         space(body);
         text(body,"Private by default",20,true);
         text(body,"This Android app stores only reminder settings and timer state. It cannot read your browser’s account, tasks or history. Notifications use general wording. Your website and its records are unchanged.",14,false);
-        text(body,"Preview 0.1 · Android 8 or later\nReopen after force-stopping to restore alarms. Phone-use measurement, widgets and biometric lock are not included.",13,false);
+        text(body,"Preview 0.2 · Android 8 or later\nReopen after force-stopping to restore alarms. Phone-use measurement, widgets and biometric lock are not included.",13,false);
         safe(()->{Alarms.daily(this);Alarms.focus(this);});
     }
     private void open(boolean offline) {
@@ -88,12 +93,12 @@ public final class MainActivity extends Activity {
         primary.setText(remaining>0?"Resume focus":"Start focus");primary.setEnabled(!running);
         pause.setEnabled(running);cancel.setEnabled(running||remaining>0||p.getBoolean("finished",false));minutes.setEnabled(!running&&remaining==0);
         reminderStatus.setText(String.format(Locale.ROOT,"%02d:%02d IST · %s",p.getInt("hour",9),p.getInt("minute",0),p.getBoolean("reminder",false)?"Enabled":"Off"));
-        boolean enabled=getSystemService(NotificationManager.class).areNotificationsEnabled();
-        permissions.setText(enabled?"Notifications are allowed. Battery settings may delay delivery.":"Notifications are off. Enable them to receive reminders and timer alerts.");
+        boolean appEnabled=getSystemService(NotificationManager.class).areNotificationsEnabled();
+        permissions.setText(!appEnabled?"Notifications are off. Enable them to receive reminders and timer alerts.":!Alarms.channelEnabled(this)?"The Steady reminders category is off. Open notification settings below to enable timer alerts and reminders.":"Notifications are allowed. Battery settings may delay delivery.");
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private TextView text(LinearLayout body,String s,int size,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(Color.rgb(32,42,50));t.setPadding(0,dp(6),0,dp(8));t.setLineSpacing(dp(3),1);if(bold)t.setTypeface(null,android.graphics.Typeface.BOLD);body.addView(t);return t;}
-    private Button button(LinearLayout body,String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setMinHeight(dp(52));b.setTextColor(Color.rgb(52,79,59));body.addView(b,new LinearLayout.LayoutParams(-1,-2));b.setOnClickListener(v->safe(r));return b;}
+    private Button button(LinearLayout body,String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setMinHeight(dp(52));b.setPadding(dp(16),dp(12),dp(16),dp(12));b.setTextColor(Color.rgb(52,79,59));LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);layout.topMargin=dp(6);layout.bottomMargin=dp(6);body.addView(b,layout);b.setOnClickListener(v->safe(r));return b;}
     private void space(LinearLayout body){body.addView(new View(this),new LinearLayout.LayoutParams(1,dp(24)));}
     private boolean safe(Runnable action){try{action.run();return true;}catch(IllegalStateException|SecurityException e){handler.removeCallbacks(tick);showError("Could not save or schedule on this device. Check available storage and notification settings, then reopen Steady.");return false;}}
     private void showError(String message){new AlertDialog.Builder(this).setTitle("Please check").setMessage(message).setPositiveButton("OK",null).show();}

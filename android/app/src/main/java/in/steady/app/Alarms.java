@@ -4,6 +4,15 @@ import android.content.*;
 import android.os.SystemClock;
 final class Alarms {
     static final int FOCUS=100, DAILY=200;
+    static final String CHANNEL="steady-reminders";
+    static void channel(Context c) {
+        c.getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL,"Steady reminders",NotificationManager.IMPORTANCE_DEFAULT));
+    }
+    static boolean channelEnabled(Context c) {
+        NotificationManager manager=c.getSystemService(NotificationManager.class);
+        NotificationChannel channel=manager.getNotificationChannel(CHANNEL);
+        return manager.areNotificationsEnabled() && channel!=null && channel.getImportance()!=NotificationManager.IMPORTANCE_NONE;
+    }
     static PendingIntent intent(Context c,int id) {
         return PendingIntent.getBroadcast(c,id,new Intent(c,AlarmReceiver.class).setAction("steady."+id),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
     }
@@ -20,10 +29,10 @@ final class Alarms {
     }
     static void notify(Context c,int id,String title,String text) {
         NotificationManager manager=c.getSystemService(NotificationManager.class);
-        manager.createNotificationChannel(new NotificationChannel("steady-reminders","Steady reminders",NotificationManager.IMPORTANCE_DEFAULT));
+        channel(c);
         if(android.os.Build.VERSION.SDK_INT>=33 && c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)return;
         PendingIntent open=PendingIntent.getActivity(c,id,new Intent(c,MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        manager.notify(id,new Notification.Builder(c,"steady-reminders").setSmallIcon(R.drawable.ic_notification)
+        manager.notify(id,new Notification.Builder(c,CHANNEL).setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(text).setContentIntent(open).setAutoCancel(true)
             .setVisibility(Notification.VISIBILITY_PRIVATE).build());
     }

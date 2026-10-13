@@ -1,4 +1,4 @@
-# Steady Android preview 0.1
+# Steady Android preview 0.2
 
 Native Android companion for the existing Steady web workspace. Android 8+ and a browser required. This preview is not a Play Store release or a bundled native rewrite.
 
@@ -29,3 +29,9 @@ The delivered build is debug-signed for direct preview installation. Future dist
 
 ## Verification
 Unit tests cover IST scheduling, midnight/year boundaries, duration bounds, pause, reboot and clock correction. Build/lint results accompany delivery. Device-only checks must still cover installation, OAuth round-trip, permission denial, background alerts, reboot, airplane-mode access, font scaling and browser choice. No physical-device test is claimed without running it.
+
+## Preview 0.2 audit fixes
+
+Notification status checks both the app permission and the Steady reminders channel. The manage button opens the channel settings when app notifications are allowed. Native buttons have more padding and separation. The web workspace now syncs on opening/returning/reconnecting, preserves unsaved forms, and protects newer confirmed offline state after an interrupted refresh.
+
+This build uses a new debug signing certificate. If Android rejects it as an update, reinstall the companion; its reminder preferences and local timer reset. Browser account records and offline storage are separate from the companion. This is still a preview, not a Play Store release.
