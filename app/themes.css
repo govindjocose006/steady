@@ -1,0 +1,87 @@
+/* Shared palette tokens also colour the small previews in Appearance. */
+:root, [data-palette="forest"] {
+  --accent: #365b47;
+  --accent-hover: #284735;
+  --accent-soft: #eaf1e6;
+  --accent-tint: #f4f7f0;
+  --accent-line: #bdcdb7;
+  --nav-bg: #1c3028;
+  --nav-hover: #2b4337;
+  --nav-text: #c8d8ce;
+  --nav-muted: #a2b7a9;
+  --nav-active: #daebbc;
+  --nav-active-ink: #263c2d;
+  --background: #f5f6f2;
+  --line: #e0e5dc;
+}
+[data-palette="ocean"] {
+  --accent: #285e83;
+  --accent-hover: #1e4868;
+  --accent-soft: #e5f0f8;
+  --accent-tint: #f1f7fb;
+  --accent-line: #b5cddd;
+  --nav-bg: #162e42;
+  --nav-hover: #24445c;
+  --nav-text: #c9dce9;
+  --nav-muted: #a0bbce;
+  --nav-active: #c5e5f6;
+  --nav-active-ink: #183c56;
+  --background: #f2f6f9;
+  --line: #dce5ed;
+}
+[data-palette="lavender"] {
+  --accent: #69508e;
+  --accent-hover: #513c71;
+  --accent-soft: #f0eaf7;
+  --accent-tint: #f8f5fb;
+  --accent-line: #cec0df;
+  --nav-bg: #2d253e;
+  --nav-hover: #443654;
+  --nav-text: #ded3eb;
+  --nav-muted: #bdb0d0;
+  --nav-active: #e3d5f5;
+  --nav-active-ink: #423058;
+  --background: #f7f5fa;
+  --line: #e6dfed;
+}
+[data-palette="terracotta"] {
+  --accent: #985438;
+  --accent-hover: #78402b;
+  --accent-soft: #f7eade;
+  --accent-tint: #fcf6f0;
+  --accent-line: #dfc4b2;
+  --nav-bg: #3d2b25;
+  --nav-hover: #573d31;
+  --nav-text: #ead8ce;
+  --nav-muted: #cdb5a7;
+  --nav-active: #f2d5b3;
+  --nav-active-ink: #573724;
+  --background: #faf6f1;
+  --line: #eadfd4;
+}
+[data-palette="slate"] {
+  --accent: #47596f;
+  --accent-hover: #334358;
+  --accent-soft: #e9eef3;
+  --accent-tint: #f4f6f9;
+  --accent-line: #c1ccd9;
+  --nav-bg: #242d3a;
+  --nav-hover: #374353;
+  --nav-text: #d2dbe6;
+  --nav-muted: #aebccd;
+  --nav-active: #d7e2ef;
+  --nav-active-ink: #2d3b4e;
+  --background: #f4f6f8;
+  --line: #dfe4eb;
+}
+:root {
+  --green: var(--accent);
+  --ink: #25313b;
+  --muted: #606d78;
+  --surface: #ffffff;
+  --blue: #426ab5;
+  --purple: #8762b0;
+  --orange: #ae742e;
+  --shadow: 0 4px 20px #192b3805, 0 1px 3px #192b3805;
+  color-scheme: light;
+}

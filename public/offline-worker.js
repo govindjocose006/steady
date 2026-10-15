@@ -1,5 +1,5 @@
 /* Public offline shell only. Never cache account/API responses or private HTML. */
-const CACHE='steady-public-offline-v2';
+const CACHE='steady-public-offline-v3';
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE);
  const response=await fetch('/offline',{cache:'reload',credentials:'omit'});

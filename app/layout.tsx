@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import {AppearanceProvider} from "./appearance";
 
 export const viewport: Viewport = { themeColor: "#182722" };
 
@@ -21,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased"><AppearanceProvider>{children}</AppearanceProvider></body>
     </html>
   );
 }
