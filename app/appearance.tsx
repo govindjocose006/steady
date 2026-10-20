@@ -4,6 +4,7 @@ import {useSyncExternalStore, type ReactNode} from 'react';
 import {ThemeProvider, useTheme} from 'next-themes';
 import {Dialog} from 'radix-ui';
 import {Check, Palette, X} from 'lucide-react';
+import {EffectsProvider, EffectsSetting} from './effects-preference';
 
 const schemes = [
   {id: 'forest', name: 'Forest', description: 'Sage & warm white'},
@@ -15,7 +16,7 @@ const schemes = [
 const subscribe = () => () => {};
 
 export function AppearanceProvider({children}: {children: ReactNode}) {
-  return <ThemeProvider attribute="data-palette" storageKey="steady-colour-scheme" defaultTheme="forest" themes={schemes.map(scheme => scheme.id)} enableSystem={false} enableColorScheme={false} disableTransitionOnChange>{children}</ThemeProvider>;
+  return <ThemeProvider attribute="data-palette" storageKey="steady-colour-scheme" defaultTheme="forest" themes={schemes.map(scheme => scheme.id)} enableSystem={false} enableColorScheme={false} disableTransitionOnChange><EffectsProvider>{children}</EffectsProvider></ThemeProvider>;
 }
 
 export default function AppearancePicker() {
@@ -39,6 +40,7 @@ export default function AppearancePicker() {
           </button>)}
         </div>
         <p className="appearance-note" role="status">{selected ? `${selected.name} selected. ` : ''}Your choice is saved in this browser. You can change it anytime.</p>
+        <EffectsSetting/>
         <div className="dialog-actions"><Dialog.Close className="primary-button">Done</Dialog.Close></div>
       </Dialog.Content>
     </Dialog.Portal>

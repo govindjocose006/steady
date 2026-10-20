@@ -26,7 +26,12 @@ export function weeklySummary(s:State,selectedDate:string){
  const actual=(values:(number|null)[])=>({minutes:values.reduce<number>((n,v)=>n+(v??0),0),recorded:values.filter(v=>v!==null).length,missing:values.filter(v=>v===null).length});
  const sessionActual=(kind:'practice'|'revision')=>actual([...sessions.filter(r=>r.sessionType===kind).map(r=>r.actualMinutes),...legacySessions.filter(t=>t.kind===kind).map(()=>null)]);
  const hasEntries=(goal:string)=>s.tasks.some(t=>t.goal===goal&&inWeek(t.dueDate))||s.workspaceRecords.some(r=>inWeek(r.plannedDate)&&(goal==='net'?r.kind!=='research':r.kind==='research'));
- return {start,end,nextStart:addDays(start,7),elapsedDays:elapsed.length,partial:elapsed.length<7||(start<=s.today&&s.today<=end),future:start>s.today,
+ const activity=dates.map(date=>({date,future:date>s.today,
+ phd:submitted.filter(a=>a.submissionDate===date).length+oldSubmitted.filter(t=>t.completedDate===date).length+doneTasks.filter(t=>t.goal==='phd'&&t.kind!=='application'&&t.completedDate===date).length,
+ net:records.filter(r=>r.kind!=='research'&&r.completionDate===date).length+doneTasks.filter(t=>t.goal==='net'&&!t.workspaceRecordId&&t.completedDate===date).length,
+ research:research.filter(r=>r.completionDate===date).length+legacyResearch.filter(t=>t.completedDate===date).length
+ }));
+ return {activity,start,end,nextStart:addDays(start,7),elapsedDays:elapsed.length,partial:elapsed.length<7||(start<=s.today&&s.today<=end),future:start>s.today,
  applications:{count:submitted.length+oldSubmitted.length,records:submitted,legacy:oldSubmitted},
  lectures:{count:lectures.length+legacyLectures.length,daily,hasEntries:lectures.length>0||legacyLectures.length>0||hasEntries('net'),metDays:daily.filter(d=>!d.future&&d.met).length,unknownTargets:daily.filter(d=>!d.future&&!d.historicalKnown).length},
  practice:{count:sessions.filter(r=>r.sessionType==='practice').length+legacySessions.filter(t=>t.kind==='practice').length,...sessionActual('practice')},revision:{count:sessions.filter(r=>r.sessionType==='revision').length+legacySessions.filter(t=>t.kind==='revision').length,...sessionActual('revision')},

@@ -1,5 +1,6 @@
 import {spawnSync} from 'node:child_process';
 const checks=[
+ ['scripts/verify-progress-feedback.mjs'],
  ['scripts/verify-foundation.mjs'],
  ['scripts/verify-applications.mjs'],
  ['scripts/verify-workspace.mjs'],
